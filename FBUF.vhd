@@ -1,0 +1,51 @@
+----------------------------------------------------------------------------------
+-- Company:
+-- Engineer:
+--
+-- Create Date:    20:35:15 03/08/2017
+-- Design Name:
+-- Module Name:    FBUF - Behavioral
+-- Project Name:
+-- Target Devices:
+-- Tool versions:
+-- Description:
+--
+-- Dependencies:
+--
+-- Revision:
+-- Revision 0.01 - File Created
+-- Additional Comments:
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity FBUF is
+    Port ( clk: in STD_LOGIC ;
+			instr_in : in  STD_LOGIC_VECTOR (15 downto 0);
+			instr_out : out  STD_LOGIC_VECTOR (15 downto 0));
+end FBUF;
+
+architecture Behavioral of FBUF is
+
+
+begin
+
+	process(clk,instr_in)
+	begin
+		if rising_edge(clk) and clk'event  then
+
+			instr_out <= instr_in;
+		end if;
+	END PROCESS;
+
+end Behavioral;
