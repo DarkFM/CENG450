@@ -238,9 +238,9 @@ begin
                 IN_op_code => S_op_code,
 
                 OUT_ra_index => P_out_ra,
-                OUT_rb => P_OUT_VAL_1,
-                OUT_rc => P_OUT_VAL_2,
-    			OUT_c1 => P_OUT_C1,
+                OUT_rb => P_IN_arg1,
+                OUT_rc => P_IN_arg2,  -- 
+    			OUT_c1 => P_OUT_C1,  -- c1 to processor output
                 OUT_op_code => S_op_code_DBUF --connect to alu
             );
 
@@ -254,7 +254,7 @@ begin
             P_IN_alu_mode => S_DBUF_op_code,
             P_IN_arg1 => S_DBUF_VAL_1,
             P_IN_arg2 => S_DBUF_VAL_2,
-            P_OUT_result => dout,
+            P_OUT_result => dout,   -- result to processor
             P_OUT_z_flag => P_OUT_z_flag,
             P_OUT_n_flag => P_OUT_n_flag,
             P_OUT_p_flag => P_OUT_p_flag
