@@ -8,26 +8,18 @@ entity decode_stage is
 	Port
 	(
 		instr_in : in std_logic_vector(15 downto 0);
-		-- write_en : in std_logic;
-		-- write_address: in std_logic_vector(2 downto 0);
-		-- data_in : std_logic_vector(15 downto 0);
-		-- clk : in std_logic;
-		-- reset : in std_logic;
-
 		OUT_OP_CODE : out std_logic_vector(6 downto 0);
 
 		-- needed for A instruvctions
-		-- OUT_VAL_1 : out std_logic_vector(15 downto 0);
-		-- OUT_VAL_2 : out std_logic_vector(15 downto 0);
-
 		-- signals for register file, also RA might need to go to memory
-		OUT_RA_index : out std_logic_vector(3 downto 0);
-		OUT_RB_index : out std_logic_vector(3 downto 0);
-		OUT_RC_index : out std_logic_vector(3 downto 0);
-
+		rd_index1 : out std_logic_vector(2 downto 0);
+		rd_index2 : out std_logic_vector(2 downto 0);
 
 		-- needed for the shift offset
-		OUT_C1_index : out std_logic_vector(3 downto 0)
+		OUT_C1 : out std_logic_vector(3 downto 0);
+
+		-- needed by write back or memory stage
+		OUT_RA_index : out std_logic_vector(2 downto 0)
 
 	);
 end decode_stage;
@@ -97,15 +89,15 @@ begin
 
 				when 0 => null;
 				when 1 to 4 =>
-					OUT_RB_index <= A_RB;
-					OUT_RC_index <= A_RC;
+					rd_index1 <= A_RB;
+					rd_index2 <= A_RC;
 				when 5 to 6 =>
-					OUT_RA_index <= A_RA;
+					rd_index1 <= A_RA;
 					OUT_C1_index <= A_C1;
 					rd_index2 <= (others => '0');
 
 				when 7 to 33 =>
-					OUT_RA_index <= A_RA;
+					rd_index1 <= A_RA;
 				when others => null;
 			end case;
 
