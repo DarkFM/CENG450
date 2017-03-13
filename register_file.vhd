@@ -24,7 +24,7 @@ end register_file;
 architecture register_file of register_file is
 
 	type T_reg_array is array (integer range 0 to 7) of std_logic_vector(15 downto 0); -- try without "integer range"
-	signal S_reg_file : T_reg_array := (X"FFFF", X"1111",X"2222", X"3333", X"4444", X"5555", X"6666", X"7777") ;
+	signal S_reg_file : T_reg_array := (X"000F", X"0011",X"0022", X"0033", X"0044", X"0055", X"0066", X"0077") ;
 	
 begin
 	--write operation

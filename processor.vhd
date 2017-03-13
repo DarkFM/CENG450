@@ -36,17 +36,20 @@ entity processor is
            P_clock : in  STD_LOGIC;
            P_enable : in std_logic;
 
-			--   P_op_code: out std_logic_vector(6 downto 0);
+			   P_op_code: out std_logic_vector(6 downto 0);
 			-- 	P_OUT_VAL_1 : out std_logic_vector(15 downto 0);
 			-- 	P_OUT_VAL_2 : out std_logic_vector(15 downto 0);
-				-- P_OUT_C1 : out std_logic_vector(3 downto 0);
+				 P_OUT_C1 : out std_logic_vector(3 downto 0);
                 -- to write back
-                P_out_ra : out std_logic_vector(2 downto 0);
+                --P_out_ra : out std_logic_vector(2 downto 0);
                 -- results
                 dout: out std_logic_vector(15 downto 0);
                 P_OUT_z_flag : out std_logic;
                 P_OUT_n_flag : out std_logic;
-                P_OUT_p_flag : out std_logic
+                P_OUT_p_flag : out std_logic;
+					OUT_EX : out  STD_LOGIC_VECTOR (4 downto 0);
+					OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
+					OUT_WB : out  STD_LOGIC_VECTOR (3 downto 0)	
 
 			  );
 end processor;
@@ -76,21 +79,40 @@ architecture Behavioral of processor is
 		);
 	end component;
 
-	component decode_stage is
-		Port(
-			instr_in : in std_logic_vector(15 downto 0);
+--	component decode_stage is
+--		Port(
+--			instr_in : in std_logic_vector(15 downto 0);
+--			OUT_OP_CODE : out std_logic_vector(6 downto 0);
+--
+--            rd_index1 : out std_logic_vector(2 downto 0);
+--            rd_index2 : out std_logic_vector(2 downto 0);
+--
+--
+--            -- needed for the shift offset
+--            OUT_C1 : out std_logic_vector(3 downto 0);
+--
+--    		OUT_RA_index : out std_logic_vector(2 downto 0)
+--		);
+--	end component;
+
+
+component control_unit is
+    Port ( 
+			CLK : IN STD_LOGIC;
+			RST : IN STD_LOGIC;
+			IN_CTRL_instr_in : in  STD_LOGIC_VECTOR (15 downto 0);
+
 			OUT_OP_CODE : out std_logic_vector(6 downto 0);
+			OUT_CTRL_EX : out  STD_LOGIC_VECTOR (4 downto 0);
+			OUT_CTRL_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
+			OUT_CTRL_WB : out  STD_LOGIC_VECTOR (3 downto 0);
 
-            rd_index1 : out std_logic_vector(2 downto 0);
-            rd_index2 : out std_logic_vector(2 downto 0);
-
-
-            -- needed for the shift offset
-            OUT_C1 : out std_logic_vector(3 downto 0);
-
-    		OUT_RA_index : out std_logic_vector(2 downto 0)
+			rd_index1 : out std_logic_vector(2 downto 0);
+			rd_index2 : out std_logic_vector(2 downto 0)
 		);
-	end component;
+			
+end component;
+
 
     component register_file is
 		port (
@@ -110,18 +132,20 @@ architecture Behavioral of processor is
 	end component;
 
     component DBUF is
-        Port ( clk: in STD_LOGIC ;
-                IN_ra_index: in std_logic_vector(3 downto 0);
-                IN_rb: in std_logic_vector(15 downto 0);
-                IN_rc: in std_logic_vector(15 downto 0);
-                IN_c1 : in  STD_LOGIC_VECTOR (2 downto 0);
-                IN_op_code: in std_logic_vector(6 downto 0);
-
-                OUT_ra_index: out std_logic_vector(15 downto 0);
-                OUT_rb: out std_logic_vector(15 downto 0);
-                OUT_rc: out std_logic_vector(15 downto 0);
-                OUT_c1 : out  STD_LOGIC_VECTOR (2 downto 0);
-                OUT_op_code: out std_logic_vector(6 downto 0)
+    Port ( clk: in STD_LOGIC ;
+				IN_EX : in  STD_LOGIC_VECTOR (4 downto 0);
+				IN_MEM : in  STD_LOGIC_VECTOR (3 downto 0);
+				IN_WB : in  STD_LOGIC_VECTOR (3 downto 0);	 
+            IN_rb: in std_logic_vector(15 downto 0);
+            IN_rc: in std_logic_vector(15 downto 0);
+            IN_op_code: in std_logic_vector(6 downto 0);
+				
+				OUT_EX : out  STD_LOGIC_VECTOR (4 downto 0);
+				OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
+				OUT_WB : out  STD_LOGIC_VECTOR (3 downto 0);				
+            OUT_rb: out std_logic_vector(15 downto 0);
+            OUT_rc: out std_logic_vector(15 downto 0);
+            OUT_op_code: out std_logic_vector(6 downto 0)
             );
     end component;
 
@@ -132,7 +156,7 @@ architecture Behavioral of processor is
     		P_IN_en : in std_logic;
     		P_IN_clk : in std_logic;
 
-    		P_IN_alu_mode : in std_logic_vector(2 downto 0);
+    		P_IN_alu_mode : in std_logic_vector(6 downto 0);
     		P_IN_arg1 : in std_logic_vector(15 downto 0);
     		P_IN_arg2 : in std_logic_vector(15 downto 0);
     		P_OUT_result : out std_logic_vector(15 downto 0);
@@ -146,7 +170,7 @@ architecture Behavioral of processor is
 
 	signal PC_out: std_logic_vector(6 downto 0);
 	signal INSTR_TO_FBUF: std_logic_vector(15 downto 0);
-	signal FBUF_TO_DECODE: std_logic_vector(15 downto 0);
+	signal FBUF_TO_CU: std_logic_vector(15 downto 0);
 
 	--signals for FBUF to REG_FILE
     signal S_RB: std_logic_vector(2 downto 0);
@@ -161,7 +185,7 @@ architecture Behavioral of processor is
     -- signals for REG_FILE and DECODE to DBUF
     SIGNAL S_op_code: std_logic_vector(6 downto 0);
     signal RA_index_carry : std_logic_vector(2 downto 0);
-    signal C1_carry : std_logic_vector(2 downto 0);
+   -- signal C1_carry : std_logic_vector(3 downto 0);
     signal Reg_file_data1 : std_logic_vector(15 downto 0);
     signal Reg_file_data2 : std_logic_vector(15 downto 0);
 
@@ -169,6 +193,15 @@ architecture Behavioral of processor is
     signal S_DBUF_op_code : std_logic_vector(6 downto 0);
     signal S_DBUF_VAL_1 : std_logic_vector(15 downto 0);
     signal S_DBUF_VAL_2 : std_logic_vector(15 downto 0);
+	 
+	 -- signals from ALU to processor output
+	 signal S_ALU_OUT_1 : STD_LOGIC_VECTOR(15 DOWNTO 0);
+	 signal S_ALU_OUT_2 : STD_LOGIC_VECTOR(15 DOWNTO 0);
+	 
+	-- signals from ctrl unit to DBUF 
+	SIGNAL S_OUT_CTRL_EX :  STD_LOGIC_VECTOR (4 downto 0);
+	SIGNAL S_OUT_CTRL_MEM : STD_LOGIC_VECTOR (3 downto 0);
+	SIGNAL S_OUT_CTRL_WB :  STD_LOGIC_VECTOR (3 downto 0);
 
 
 begin
@@ -192,24 +225,40 @@ begin
 		port map (
 			clk => P_clock,
 			instr_in => INSTR_TO_FBUF,
-			instr_out => FBUF_TO_DECODE
+			instr_out => FBUF_TO_CU
 		);
 
-	decode: decode_stage
-    	Port map
-    	(
-    		instr_in => FBUF_TO_DECODE,
-    		OUT_OP_CODE => S_op_code,
+--	decode: decode_stage
+--    	Port map
+--    	(
+--    		instr_in => FBUF_TO_DECODE,
+--   		OUT_OP_CODE => S_op_code,
+--
+--    		-- needed for A instruvctions
+--    		rd_index1 => index1,
+--    		rd_index2 => index2,
+--
+--    		-- needed for the shift offset
+--    		OUT_C1 => C1_carry,
+--    		OUT_RA_index => RA_index_carry
+--
+--    	);
 
-    		-- needed for A instruvctions
-    		rd_index1 => index1,
-    		rd_index2 => index2,
+Ctrl_unit: control_unit
+    Port map ( 
+			CLK => P_clock,
+			RST   => P_reset,
+			IN_CTRL_instr_in => FBUF_TO_CU,
 
-    		-- needed for the shift offset
-    		OUT_C1 => C1_carry,
-    		OUT_RA_index => RA_index_carry
-
-    	);
+			OUT_OP_CODE => S_op_code,
+			OUT_CTRL_EX => S_OUT_CTRL_EX,
+			OUT_CTRL_MEM => S_OUT_CTRL_MEM,
+			OUT_CTRL_WB => S_OUT_CTRL_WB,
+			
+			rd_index1 => index1,
+			rd_index2 => index2
+		);
+			
 
 
     reg_file: register_file
@@ -231,17 +280,20 @@ begin
     decode_buffer: DBUF
         port map (
                 clk => P_clock,
-                IN_ra_index => RA_index_carry,
-                IN_rb => Reg_file_data1,
-    			IN_rc => Reg_file_data2,
-    			IN_c1 => C1_carry,
-                IN_op_code => S_op_code,
-
-                OUT_ra_index => P_out_ra,
-                OUT_rb => P_IN_arg1,
-                OUT_rc => P_IN_arg2,  -- 
-    			OUT_c1 => P_OUT_C1,  -- c1 to processor output
-                OUT_op_code => S_op_code_DBUF --connect to alu
+					 
+				IN_EX => S_OUT_CTRL_EX,
+				IN_MEM => S_OUT_CTRL_MEM,
+				IN_WB => S_OUT_CTRL_WB,	 
+            IN_rb => Reg_file_data1,
+            IN_rc => Reg_file_data2,
+            IN_op_code => S_op_code,
+				
+				OUT_EX => OUT_EX,
+				OUT_MEM => OUT_MEM,
+				OUT_WB => OUT_WB,		
+            OUT_rb => S_DBUF_VAL_1,
+            OUT_rc => S_DBUF_VAL_2, 
+            OUT_op_code => P_op_code					 
             );
 
     ALU1: alu
@@ -255,9 +307,9 @@ begin
             P_IN_arg1 => S_DBUF_VAL_1,
             P_IN_arg2 => S_DBUF_VAL_2,
             P_OUT_result => dout,   -- result to processor
-            P_OUT_z_flag => P_OUT_z_flag,
-            P_OUT_n_flag => P_OUT_n_flag,
-            P_OUT_p_flag => P_OUT_p_flag
+            P_OUT_z_flag => P_OUT_z_flag,-- result to processor
+            P_OUT_n_flag => P_OUT_n_flag, -- result to processor
+            P_OUT_p_flag => P_OUT_p_flag -- result to processor
 
         );
 

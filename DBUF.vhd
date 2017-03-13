@@ -13,16 +13,23 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity DBUF is
     Port ( clk: in STD_LOGIC ;
-            IN_ra_index: in std_logic_vector(3 downto 0);
+				IN_EX : in  STD_LOGIC_VECTOR (4 downto 0);
+				IN_MEM : in  STD_LOGIC_VECTOR (3 downto 0);
+				IN_WB : in  STD_LOGIC_VECTOR (3 downto 0);	 
+            --IN_ra_index: in std_logic_vector(2 downto 0);
             IN_rb: in std_logic_vector(15 downto 0);
             IN_rc: in std_logic_vector(15 downto 0);
-			IN_c1 : in  STD_LOGIC_VECTOR (2 downto 0);
+				--IN_c1 : in  STD_LOGIC_VECTOR (3 downto 0);
             IN_op_code: in std_logic_vector(6 downto 0);
-
-            OUT_ra_index: out std_logic_vector(3 downto 0);
+				--PC_in : in std_logic_vector(15 downto 0)
+				--PC_out : out std_logic_vector(15 downto 0)
+            --OUT_ra_index: out std_logic_vector(2 downto 0);
+				OUT_EX : out  STD_LOGIC_VECTOR (4 downto 0);
+				OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
+				OUT_WB : out  STD_LOGIC_VECTOR (3 downto 0);
             OUT_rb: out std_logic_vector(15 downto 0);
             OUT_rc: out std_logic_vector(15 downto 0);
-			OUT_c1 : out  STD_LOGIC_VECTOR (2 downto 0);
+				--OUT_c1 : out  STD_LOGIC_VECTOR (3 downto 0);
             OUT_op_code: out std_logic_vector(6 downto 0)
         );
 			-- instr_out : out  STD_LOGIC_VECTOR (15 downto 0));
@@ -35,12 +42,12 @@ begin
 
 	process(clk)
 	begin
-		if rising_edge(clk) and clk'event  then
-
-            OUT_ra_index <= IN_ra_index;
+		if rising_edge(clk) then
+				OUT_EX <= IN_EX;
+				OUT_MEM <= IN_MEM;
+				OUT_WB <= IN_WB;
             OUT_rb <= IN_rb;
             OUT_rc <= IN_rc;
-            OUT_c1 <= IN_c1;
             OUT_op_code <= IN_op_code;
 		end if;
 	END PROCESS;
