@@ -32,19 +32,17 @@ use ieee.numeric_std.all;
 
 entity control_unit is
     Port ( 
-			CLK : IN STD_LOGIC;
 			RST : IN STD_LOGIC;
+			clk : in std_logic;
 			IN_CTRL_instr_in : in  STD_LOGIC_VECTOR (15 downto 0);
 
-			OUT_OP_CODE : out std_logic_vector(6 downto 0);
 			OUT_CTRL_EX : out  STD_LOGIC_VECTOR (4 downto 0);
 			OUT_CTRL_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
 			OUT_CTRL_WB : out  STD_LOGIC_VECTOR (3 downto 0);
-			
-			-- needed for reg file
-			-- signals for register file, also RA might need to go to memory
-			rd_index1 : out std_logic_vector(2 downto 0);
-			rd_index2 : out std_logic_vector(2 downto 0)
+			OUT_CTRL_R_INDEX1: out  STD_LOGIC_VECTOR (2 downto 0);
+			OUT_CTRL_R_INDEX2: out  STD_LOGIC_VECTOR (2 downto 0)
+--			OUT_CTRL_instr_in : OUT  STD_LOGIC_VECTOR (15 downto 0);
+
 			);
 			
 end control_unit;
@@ -66,101 +64,134 @@ architecture Behavioral of control_unit is
 	-- Memory stage
 	
 	-- Write Back stage
-	
+----	signal S_EX: std_logic_vector(4 downto 0);
+--	signal S_MEM: STD_LOGIC_VECTOR (3 downto 0);
+----	signal S_WB: std_logic_vector(3 downto 0);
+--	
+--	SIGNAL ctrl_C1: std_logic_vector(3 downto 0);
+--	SIGNAL ctrl_ALU_ENABLE: std_logic;
+--	-- variables for WB stage
+--	SIGNAL ctrl_RA_index: std_logic_vector(2 downto 0);
+--	SIGNAL ctrl_REG_W_ENABLE: std_logic;
+
+	signal int_op_code : integer;
 
 begin
-	var_assign: process(CLK)
-		-- variables for EX stage
-		variable ctrl_C1: std_logic_vector(3 downto 0);
-		variable ctrl_ALU_ENABLE: std_logic;
-		-- variables for WB stage
-		variable ctrl_RA_index: std_logic_vector(2 downto 0);
-		variable ctrl_REG_W_ENABLE: std_logic;
+--	var_assign: process(IN_CTRL_instr_in)
+--		-- variables for EX stage
+--		variable ctrl_C1: std_logic_vector(3 downto 0);
+--		variable ctrl_ALU_ENABLE: std_logic;
+--		-- variables for WB stage
+--		variable ctrl_RA_index: std_logic_vector(2 downto 0);
+--		variable ctrl_REG_W_ENABLE: std_logic;
 		
-		variable int_op_code: integer := to_integer(unsigned(A_OP_CODE));
+
+--		variable int_op_code: integer := to_integer(unsigned(A_OP_CODE));
+
 		
-		begin
-		OUT_OP_CODE <= A_OP_CODE;
+--		begin
+
+		int_op_code <= to_integer(unsigned(A_OP_CODE));
 		
-		if rising_edge(CLK) then
-			if RST = '1' then
-				OUT_CTRL_EX <= (others => '0');
-				OUT_CTRL_MEM <= (others => '0');
-				OUT_CTRL_WB <= (others => '0');
-				rd_index1 <= (others => '0');
-				rd_index1 <= (others => '0');
-			end if;
-	
+----		if rising_edge(CLK) then
+--			if RST = '1' then
+--				ctrl_C1 <= "0000";
+--				ctrl_ALU_ENABLE <='0';
+--				ctrl_REG_W_ENABLE <= '0';
+--				ctrl_RA_index <= (others => '0');
+--				S_MEM <= (others => '0');
+--
+----				rd_index1 <= (others => '0');
+----				rd_index1 <= (others => '0');
+--		else
+--		-- signal assignments from CU
+--		case int_op_code is
+--			when 0 => 
+--				ctrl_C1 <= "0000";
+--				ctrl_ALU_ENABLE <='0';
+--				ctrl_REG_W_ENABLE <= '0';
+--				ctrl_RA_index <= (others => '0');
+--				S_MEM <= (others => '0');
+--			-- A1 format
+--			when 1 |2 |3| 4 =>
+--				-- enable ALU
+--				ctrl_C1 <= "0000";
+--				ctrl_ALU_ENABLE <= '1';
+--				-- enable write into reg
+--				ctrl_RA_index <= A_RA;
+--				ctrl_REG_W_ENABLE <= '1';
+--				S_MEM <= (others => '0');
+--				
+--				
+--				-- sending to reg file
+----				rd_index1 <= A_RB;
+----				rd_index2 <= A_RC;
+--		
+--				
+--			-- A2 format
+--			when 5 | 6 =>
+--				-- enable alu and c1 output
+--				ctrl_C1 <= A_C1;
+--				ctrl_ALU_ENABLE <= '1';
+--				-- enable write into reg
+--				ctrl_RA_index <= A_RA;
+--				ctrl_REG_W_ENABLE <= '1';
+--				S_MEM <= (others => '0');				
+--
+--				-- sending to reg file
+----				rd_index1 <= A_RA;
+----				rd_index2 <= (others => '0');
+--
+--
+--				
+--			-- A3 format
+--			when 7 | 33 =>
+--				-- enable alu 
+--				ctrl_C1 <= "0000";
+--				ctrl_ALU_ENABLE <= '1';
+--				-- enable write into reg
+--				ctrl_RA_index <= A_RA;
+--				ctrl_REG_W_ENABLE <= '1';
+--				S_MEM <= (others => '0');				
+--	
+--
+--				-- sending data to reg file
+----					rd_index1 <= A_RA;
+----					rd_index2 <= (others => '0');
+--
+--
+--			when others => null;
+--		end case;
+--		end if;
+--	end process;
 
-		-- signal assignments from CU
-		case int_op_code is
-			when 0 => 
-				OUT_CTRL_EX <= (others => '0');
-				OUT_CTRL_MEM <= (others => '0');
-				OUT_CTRL_WB <= (others => '0');
-			-- A1 format
-			when 1 to 4 =>
-				-- enable ALU
-				ctrl_C1 := "0000";
-				ctrl_ALU_ENABLE := '1';
-				-- enable write into reg
-				ctrl_RA_index := A_RA;
-				ctrl_REG_W_ENABLE := '1';
-				
-				-- sending the control signals and C1 and RA
-				OUT_CTRL_EX <= ctrl_ALU_ENABLE & ctrl_C1; -- can this be done before case 
-				OUT_CTRL_MEM <= (others => '0');
-				OUT_CTRL_WB <= ctrl_REG_W_ENABLE & ctrl_RA_index;
-				
-				-- sending to reg file
-				rd_index1 <= A_RB;
-				rd_index2 <= A_RC;
-		
-				
-			-- A2 format
-			when 5 to 6 =>
-				-- enable alu and c1 output
-				ctrl_C1 := A_C1;
-				ctrl_ALU_ENABLE := '1';
-				-- enable write into reg
-				ctrl_RA_index := A_RA;
-				ctrl_REG_W_ENABLE := '1';
-				
-				-- *****************************************
-				OUT_CTRL_EX <= ctrl_ALU_ENABLE & ctrl_C1;
-				OUT_CTRL_MEM <= (others => '0');
-				OUT_CTRL_WB <= ctrl_REG_W_ENABLE & ctrl_RA_index;
-				
-				-- sending to reg file
-				rd_index1 <= A_RA;
-				rd_index2 <= (others => '0');
-
-
-				
-			-- A3 format
-			when 7 to 33 =>
-				-- enable alu 
-				ctrl_C1 := "0000";
-				ctrl_ALU_ENABLE := '1';
-				-- enable write into reg
-				ctrl_RA_index := A_RA;
-				ctrl_REG_W_ENABLE := '1';
-				
-				--********************************************
-				OUT_CTRL_EX <= ctrl_ALU_ENABLE & ctrl_C1;
-				OUT_CTRL_MEM <= (others => '0');
-				OUT_CTRL_WB <= ctrl_REG_W_ENABLE & ctrl_RA_index;		
-
-				-- sending data to reg file
-					rd_index1 <= A_RA;
-					rd_index2 <= (others => '0');
-
-
-			when others => null;
-		end case;
-		end if;
-	end process;
+	with int_op_code select
+		OUT_CTRL_EX <=
+		-- A instructions
+			'1' & "0000" when 1 to 4,
+			'1' & A_C1 when 5 to 6,
+			'1' & "0000" when 7 to 33,
+			"00000" when others;
 			
+	with int_op_code select		
+		OUT_CTRL_MEM <= 
+				-- A instructions
+				"0000" when 1 to 4,
+				"0000" when 5 to 6,
+				"0000" when 7 to 33,
+				"0000" when others;
+				
+	with int_op_code select			
+		OUT_CTRL_WB <= 
+				-- A instructions
+				'1' & A_RA when 1 to 4,
+				'1' & A_RA when 5 to 6,
+				'1' & A_RA when 7 to 33,
+				"0000" when others;	
+			
+	OUT_CTRL_R_INDEX1 <= A_RB;
+	OUT_CTRL_R_INDEX2 <= A_RC;
+--	OUT_CTRL_instr_in	<= IN_CTRL_instr_in;	
 
 end Behavioral;
 
