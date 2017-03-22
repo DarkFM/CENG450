@@ -32,9 +32,10 @@ begin
 		if rising_edge(clk) then
 			if(rst = '1') then
 				-- this zeores out the array
-				for i in 0 to 7 loop
-					S_reg_file(i) <= (others => '0');
-				end loop;
+				--for i in 0 to 7 loop
+					--S_reg_file(i) <= (others => '0');
+				--end loop;
+				S_reg_file<= (X"000F", X"0011",X"0022", X"0033", X"0044", X"0055", X"0066", X"0077") ;
 			elsif(reg_wr_en = '1') then
 				case wr_address(2 downto 0) is
 					-- can probably just change this to use an array index like RAM

@@ -36,7 +36,7 @@ entity control_unit is
 			clk : in std_logic;
 			IN_CTRL_instr_in : in  STD_LOGIC_VECTOR (15 downto 0);
 
-			OUT_CTRL_EX : out  STD_LOGIC_VECTOR (4 downto 0);
+			OUT_CTRL_EX : out  STD_LOGIC_VECTOR (7 downto 0);
 			OUT_CTRL_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
 			OUT_CTRL_WB : out  STD_LOGIC_VECTOR (3 downto 0);
 			OUT_CTRL_R_INDEX1: out  STD_LOGIC_VECTOR (2 downto 0);
@@ -168,10 +168,17 @@ begin
 	with int_op_code select
 		OUT_CTRL_EX <=
 		-- A instructions
-			'1' & "0000" when 1 to 4,
-			'1' & A_C1 when 5 to 6,
-			'1' & "0000" when 7 to 33,
-			"00000" when others;
+	-- alu_en & alu_mode & c1
+			'1' & "001" & "0000" when 1,
+			'1' & "010" & "0000" when 2,
+			'1' & "011" & "0000" when 3,			
+			'1' & "100" & "0000" when 4,							
+			'1' & "101" & A_C1 when 5,
+			'1' & "110" & A_C1 when 6,
+			'1' & "111" & "0000" when 7,
+			'0' & "000" & "0000" when 32,
+			'0' & "000" & "0000" when 33,
+			'0' & "000" & "0000" when others;
 			
 	with int_op_code select		
 		OUT_CTRL_MEM <= 

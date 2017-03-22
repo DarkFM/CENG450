@@ -47,12 +47,12 @@ architecture BHV of ROM_VHDL is
 	others => "0000000000000000"); -- NOP
 begin
 
-p1:    process (clk)
+p1:    process (addr)
 	 variable add_in : integer := 0;
     begin
-        if rising_edge(clk) then
+--        if rising_edge(clk) then
             add_in := conv_integer(unsigned(addr));
             data <= rom_content(add_in);
-        end if;
+--        end if;
     end process;
 end BHV;

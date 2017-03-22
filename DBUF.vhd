@@ -13,7 +13,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity DBUF is
     Port ( clk: in STD_LOGIC ;
-				IN_EX : in  STD_LOGIC_VECTOR (4 downto 0);
+				reset: in std_logic;
+				IN_EX : in  STD_LOGIC_VECTOR (7 downto 0);
 				IN_MEM : in  STD_LOGIC_VECTOR (3 downto 0);
 				IN_WB : in  STD_LOGIC_VECTOR (3 downto 0);	 
             --IN_ra_index: in std_logic_vector(2 downto 0);
@@ -24,7 +25,7 @@ entity DBUF is
 				PC_in : in std_logic_vector(6 downto 0);
 				
             --OUT_ra_index: out std_logic_vector(2 downto 0);
-				OUT_EX : out  STD_LOGIC_VECTOR (4 downto 0);
+				OUT_EX : out  STD_LOGIC_VECTOR (7 downto 0);
 				OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
 				OUT_WB : out  STD_LOGIC_VECTOR (3 downto 0);
             OUT_rb: out std_logic_vector(15 downto 0);
@@ -47,13 +48,23 @@ begin
 --	IN_MEM <= '0';
 --	IN_WB <= '0';	
 		if rising_edge(clk) then
-				OUT_EX <= IN_EX;
-				OUT_MEM <= IN_MEM;
-				OUT_WB <= IN_WB;
-            OUT_rb <= IN_rb;
-            OUT_rc <= IN_rc;
-            OUT_instruction <= IN_instruction;
-				PC_out <= PC_in;
+			if reset = '1' then
+					OUT_EX <= (others => '0');
+					OUT_MEM <= (others => '0');
+					OUT_WB <= (others => '0');
+					OUT_rb <= (others => '0');
+					OUT_rc <= (others => '0');
+					OUT_instruction <= (others => '0');
+					PC_out <= (others => '0');
+			else
+					OUT_EX <= IN_EX;
+					OUT_MEM <= IN_MEM;
+					OUT_WB <= IN_WB;
+					OUT_rb <= IN_rb;
+					OUT_rc <= IN_rc;
+					OUT_instruction <= IN_instruction;
+					PC_out <= PC_in;
+			end if;
 		end if;
 	END PROCESS;
 

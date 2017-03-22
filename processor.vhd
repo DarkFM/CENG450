@@ -51,7 +51,7 @@ entity processor is
 --                P_OUT_z_flag : out std_logic;
 --                P_OUT_n_flag : out std_logic;
 --                P_OUT_p_flag : out std_logic;
-					OUT_EX : out  STD_LOGIC_VECTOR (4 downto 0);
+					OUT_EX : out  STD_LOGIC_VECTOR (7 downto 0);
 					OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
 					OUT_WB : out  STD_LOGIC_VECTOR (3 downto 0);
 					OUT_INSTRUC: OUT STD_LOGIC_VECTOR (15 DOWNTO 0)
@@ -66,7 +66,8 @@ architecture Behavioral of processor is
 	  port(
 			PC_IN : IN std_logic_vector(6 downto 0);
 			en_global:	in std_logic;
-			NEXT_PC:	out std_logic_vector(6 downto 0)
+			NEXT_PC:	out std_logic_vector(6 downto 0);
+			current_pc: out std_logic_vector(6 downto 0)
 	  );
     end component;
 	 
@@ -75,7 +76,9 @@ architecture Behavioral of processor is
            reset : in  STD_LOGIC;
            en_global : in  STD_LOGIC;
 			  clk: in std_logic;
-           PC_out : out  STD_LOGIC_VECTOR (6 downto 0));
+           PC_out : out  STD_LOGIC_VECTOR (6 downto 0);
+			  out_en: out std_logic
+		  );
 	end component;
 
     component ROM_VHDL IS
@@ -91,6 +94,7 @@ architecture Behavioral of processor is
 	
 	component FBUF is
 		Port ( clk: in STD_LOGIC ;
+			reset: in std_logic;
 			instr_in : in  STD_LOGIC_VECTOR (15 downto 0);
 			PC_in : in std_logic_vector(6 downto 0);
 			PC_out : out std_logic_vector(6 downto 0);
@@ -107,7 +111,7 @@ component control_unit is
 			clk : in std_logic;
 			IN_CTRL_instr_in : in  STD_LOGIC_VECTOR (15 downto 0);
 
-			OUT_CTRL_EX : out  STD_LOGIC_VECTOR (4 downto 0);
+			OUT_CTRL_EX : out  STD_LOGIC_VECTOR (7 downto 0);
 			OUT_CTRL_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
 			OUT_CTRL_WB : out  STD_LOGIC_VECTOR (3 downto 0);
 			OUT_CTRL_R_INDEX1: out  STD_LOGIC_VECTOR (2 downto 0);
@@ -137,7 +141,8 @@ end component;
 
     component DBUF is
     Port ( clk: in STD_LOGIC ;
-				IN_EX : in  STD_LOGIC_VECTOR (4 downto 0);
+				reset: in std_logic;
+				IN_EX : in  STD_LOGIC_VECTOR (7 downto 0);
 				IN_MEM : in  STD_LOGIC_VECTOR (3 downto 0);
 				IN_WB : in  STD_LOGIC_VECTOR (3 downto 0);	 
 
@@ -147,7 +152,7 @@ end component;
             IN_instruction: in std_logic_vector(15 downto 0);
 				PC_in : in std_logic_vector(6 downto 0);
 				
-				OUT_EX : out  STD_LOGIC_VECTOR (4 downto 0);
+				OUT_EX : out  STD_LOGIC_VECTOR (7 downto 0);
 				OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
 				OUT_WB : out  STD_LOGIC_VECTOR (3 downto 0);
             OUT_rb: out std_logic_vector(15 downto 0);
@@ -179,7 +184,9 @@ end component;
 
 --	signal PC_out: std_logic_vector(6 downto 0);
 	signal INSTR_TO_FBUF: std_logic_vector(15 downto 0);
---	signal FBUF_TO_CU: std_logic_vector(15 downto 0);
+	signal adder_to_FBUF: std_logic_vector(6 downto 0);
+	
+	signal enable_PC_Adder: std_logic;
 	
 	signal PC_to_ROM_add : std_logic_vector(6 downto 0);
 	signal adder_to_PC :std_logic_vector(6 downto 0);
@@ -219,7 +226,7 @@ end component;
 --	 signal S_ALU_OUT_2 : STD_LOGIC_VECTOR(15 DOWNTO 0);
 --	 
 	-- signals from ctrl unit to DBUF 
-	SIGNAL S_OUT_CTRL_EX :  STD_LOGIC_VECTOR (4 downto 0);
+	SIGNAL S_OUT_CTRL_EX :  STD_LOGIC_VECTOR (7 downto 0);
 	SIGNAL S_OUT_CTRL_MEM : STD_LOGIC_VECTOR (3 downto 0);
 	SIGNAL S_OUT_CTRL_WB :  STD_LOGIC_VECTOR (3 downto 0);
 
@@ -232,8 +239,9 @@ begin
 	PC_adder: counter
     port map (
 		PC_IN => PC_to_ROM_add,
-    	en_global => P_enable,
-    	NEXT_PC => adder_to_PC
+    	en_global => enable_PC_Adder,
+    	NEXT_PC => adder_to_PC,
+		current_pc =>adder_to_FBUF
     );
 
 	PC : PC_module
@@ -242,7 +250,8 @@ begin
 		reset => P_reset,
 		en_global => P_enable,
 		clk => P_clock,
-		PC_out => PC_to_ROM_add
+		PC_out => PC_to_ROM_add,
+		out_en => enable_PC_Adder
 	);
 
 
@@ -256,8 +265,9 @@ begin
 	fetch_buffer: FBUF
 		port map (
 			clk => P_clock,
+			reset => P_reset,
 			instr_in => INSTR_TO_FBUF,
-			PC_in => adder_to_PC,
+			PC_in => adder_to_FBUF,
 			PC_out => FBUF_PC_out,
 			instr_out => FBUF_instr_out
 		);
@@ -298,7 +308,7 @@ Ctrl_unit: control_unit
     decode_buffer: DBUF
         port map (
                 clk => P_clock,
-					 
+					 reset => P_reset,
 				IN_EX => S_OUT_CTRL_EX,
 				IN_MEM => S_OUT_CTRL_MEM,
 				IN_WB => S_OUT_CTRL_WB,	 

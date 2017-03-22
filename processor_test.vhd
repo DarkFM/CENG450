@@ -48,7 +48,7 @@ ARCHITECTURE behavior OF processor_test IS
 --         FBUF_OUT : OUT  std_logic_vector(15 downto 0);
          P_OUT_VAL_1 : OUT  std_logic_vector(15 downto 0);
          P_OUT_VAL_2 : OUT  std_logic_vector(15 downto 0);
-         OUT_EX : OUT  std_logic_vector(4 downto 0);
+         OUT_EX : OUT  std_logic_vector(7 downto 0);
          OUT_MEM : OUT  std_logic_vector(3 downto 0);
          OUT_WB : OUT  std_logic_vector(3 downto 0);
          OUT_INSTRUC : OUT  std_logic_vector(15 downto 0)
@@ -66,7 +66,7 @@ ARCHITECTURE behavior OF processor_test IS
 --   signal FBUF_OUT : std_logic_vector(15 downto 0);
    signal P_OUT_VAL_1 : std_logic_vector(15 downto 0);
    signal P_OUT_VAL_2 : std_logic_vector(15 downto 0);
-   signal OUT_EX : std_logic_vector(4 downto 0);
+   signal OUT_EX : std_logic_vector(7 downto 0);
    signal OUT_MEM : std_logic_vector(3 downto 0);
    signal OUT_WB : std_logic_vector(3 downto 0);
    signal OUT_INSTRUC : std_logic_vector(15 downto 0);
@@ -105,12 +105,13 @@ BEGIN
    stim_proc: process
    begin		
       -- hold reset state for 100 ns.
---		P_reset <= '1';
-      wait for P_clock_period*1;	
-		P_enable <= '1';		
-      wait for P_clock_period*3;	
-		P_enable <= '0';	
 		P_reset <= '1';
+      wait for 105 ns;
+		P_reset <= '0';		
+		P_enable <= '1';		
+      wait for P_clock_period*20;	
+		P_enable <= '0';	
+		--P_reset <= '1';
       -- insert stimulus here 
 
       wait;

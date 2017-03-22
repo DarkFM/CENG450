@@ -32,7 +32,8 @@ port(
 	--reset:	in std_logic;
 	PC_IN : IN std_logic_vector(6 downto 0);
 	en_global:	in std_logic;
-	NEXT_PC:	out std_logic_vector(6 downto 0)
+	NEXT_PC:	out std_logic_vector(6 downto 0);
+	current_pc: out std_logic_vector(6 downto 0)
 );
 end counter;
 
@@ -40,7 +41,7 @@ end counter;
 
 architecture behv of counter is		 	  
 	
-    signal Pre_Q: integer range 0 to 127;
+    signal Pre_Q: integer range 0 to 127:= 0 ;
 
 begin
 
@@ -53,12 +54,14 @@ begin
 -- 	    		Pre_Q <= 0;
 		if en_global = '1' then	    
 			Pre_Q <= Pre_Q + 1;
+		else
+			Pre_Q <= 0;
 	   end if;
 --	 end if;
  end process;	
  
 	 NEXT_PC <= conv_std_logic_vector(Pre_Q,7);
-	
+		current_pc <= PC_IN;
     -- concurrent assignment statement
 
 end behv;

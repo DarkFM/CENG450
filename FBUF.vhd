@@ -31,6 +31,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity FBUF is
     Port ( clk: in STD_LOGIC ;
+			reset: in std_logic;
 			instr_in : in  STD_LOGIC_VECTOR (15 downto 0);
 			PC_in : in std_logic_vector(6 downto 0);
 			PC_out : out std_logic_vector(6 downto 0);
@@ -45,8 +46,13 @@ begin
 	process(clk,instr_in,PC_in)
 	begin
 		if rising_edge(clk) then
-			instr_out <= instr_in;
-			PC_out <= PC_in;
+			if reset = '1' then
+				instr_out <= (others => '0');
+				PC_out <= (others => '0');			
+			else 
+				instr_out <= instr_in;
+				PC_out <= PC_in;
+			end if;
 		end if;
 	END PROCESS;
 
