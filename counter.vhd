@@ -29,11 +29,11 @@ entity counter is
 
 port(	
 --	clock:	in std_logic;
-	--reset:	in std_logic;
-	PC_IN : IN std_logic_vector(6 downto 0);
+	reset:	in std_logic;
+	PC_IN : IN std_logic_vector(15 downto 0);
 	en_global:	in std_logic;
-	NEXT_PC:	out std_logic_vector(6 downto 0);
-	current_pc: out std_logic_vector(6 downto 0)
+	NEXT_PC:	out std_logic_vector(15 downto 0)
+--	current_pc: out std_logic_vector(6 downto 0)
 );
 end counter;
 
@@ -50,18 +50,20 @@ begin
  process(PC_IN, en_global)
     begin
 --	 if rising_edge(clock) then
---		if reset = '1' then
--- 	    		Pre_Q <= 0;
-		if en_global = '1' then	    
-			Pre_Q <= Pre_Q + 1;
+		if reset = '1' then
+ 	    		Pre_Q <= 0;
+--		elsif en_global = '1' then	
 		else
-			Pre_Q <= 0;
+			Pre_Q <= Pre_Q + 1;
+--		else
+--			Pre_Q <= 0;
+
 	   end if;
 --	 end if;
  end process;	
  
 	 NEXT_PC <= conv_std_logic_vector(Pre_Q,7);
-		current_pc <= PC_IN;
+--		current_pc <= PC_IN;
     -- concurrent assignment statement
 
 end behv;

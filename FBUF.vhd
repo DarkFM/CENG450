@@ -33,8 +33,8 @@ entity FBUF is
     Port ( clk: in STD_LOGIC ;
 			reset: in std_logic;
 			instr_in : in  STD_LOGIC_VECTOR (15 downto 0);
-			PC_in : in std_logic_vector(6 downto 0);
-			PC_out : out std_logic_vector(6 downto 0);
+			PC_in : in std_logic_vector(15 downto 0);
+			PC_out : out std_logic_vector(15 downto 0);
 			instr_out : out  STD_LOGIC_VECTOR (15 downto 0));
 end FBUF;
 

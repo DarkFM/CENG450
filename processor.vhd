@@ -30,15 +30,18 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity processor is
-    Port ( --IN_port : in  STD_LOGIC_VECTOR (15 downto 0);
-           --OUT_port : out  STD_LOGIC_VECTOR (15 downto 0);
+    Port ( IN_port : in  STD_LOGIC_VECTOR (15 downto 0);
+           OUT_port : out  STD_LOGIC_VECTOR (15 downto 0);
            P_reset : in  STD_LOGIC;
            P_clock : in  STD_LOGIC;
            P_enable : in std_logic;
-			  P_PC_OUT:  out  STD_LOGIC_VECTOR (6 downto 0);
+--			  P_IN : in STD_LOGIC_VECTOR (15 downto 0);
+			  P_PC_OUT:  out  STD_LOGIC_VECTOR (15 downto 0);
+			  
 --			  FBUF_OUT:  out  STD_LOGIC_VECTOR (15 downto 0);
 
 --			   P_op_code: out std_logic_vector(6 downto 0);
+--			  P_OUT : out STD_LOGIC_VECTOR (15 downto 0);
 			 	P_OUT_VAL_1 : out std_logic_vector(15 downto 0);
 			 	P_OUT_VAL_2 : out std_logic_vector(15 downto 0);
 			
@@ -51,9 +54,9 @@ entity processor is
 --                P_OUT_z_flag : out std_logic;
 --                P_OUT_n_flag : out std_logic;
 --                P_OUT_p_flag : out std_logic;
-					OUT_EX : out  STD_LOGIC_VECTOR (7 downto 0);
+					OUT_EX : out  STD_LOGIC_VECTOR (5 downto 0);
 					OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
-					OUT_WB : out  STD_LOGIC_VECTOR (3 downto 0);
+					OUT_WB : out  STD_LOGIC_VECTOR (1 downto 0);
 					OUT_INSTRUC: OUT STD_LOGIC_VECTOR (15 DOWNTO 0)
 
 			  );
@@ -61,29 +64,42 @@ end processor;
 
 architecture Behavioral of processor is
 
+
+	component Mux2x1 is
+		generic(n1_bits: integer := 16;
+			n2_bits: integer := 16;
+			n3_bits: integer := 16
+	);
+		 Port ( SEL : IN STD_LOGIC; 
+					A : IN std_logic_vector(15 downto 0);
+				  B : IN std_logic_vector(15 downto 0);
+				  X : out  STD_LOGIC_VECTOR(15 downto 0));
+	end component;
+
 -- fetch stage modules
 	component counter  is
 	  port(
-			PC_IN : IN std_logic_vector(6 downto 0);
+			reset:	in std_logic;
+			PC_IN : IN std_logic_vector(15 downto 0);
 			en_global:	in std_logic;
-			NEXT_PC:	out std_logic_vector(6 downto 0);
-			current_pc: out std_logic_vector(6 downto 0)
+			NEXT_PC:	out std_logic_vector(15 downto 0)
+
 	  );
     end component;
 	 
 	 component PC_module is
-    Port ( PC_in : in  STD_LOGIC_VECTOR (6 downto 0);
+    Port ( PC_in : in  STD_LOGIC_VECTOR (15 downto 0);
            reset : in  STD_LOGIC;
            en_global : in  STD_LOGIC;
 			  clk: in std_logic;
-           PC_out : out  STD_LOGIC_VECTOR (6 downto 0);
-			  out_en: out std_logic
+           PC_out : out  STD_LOGIC_VECTOR (15 downto 0)
+--			  out_en: out std_logic
 		  );
 	end component;
 
     component ROM_VHDL IS
     	port (
-        	addr: IN std_logic_vector(6 downto 0);
+        	addr: IN std_logic_vector(15 downto 0);
         	clk: IN std_logic;
         	data: OUT std_logic_vector(15 downto 0)
 	  );
@@ -96,12 +112,14 @@ architecture Behavioral of processor is
 		Port ( clk: in STD_LOGIC ;
 			reset: in std_logic;
 			instr_in : in  STD_LOGIC_VECTOR (15 downto 0);
-			PC_in : in std_logic_vector(6 downto 0);
-			PC_out : out std_logic_vector(6 downto 0);
+			PC_in : in std_logic_vector(15 downto 0);
+			PC_out : out std_logic_vector(15 downto 0);
 			instr_out : out  STD_LOGIC_VECTOR (15 downto 0)
 			
 		);
 	end component;
+
+
 
 	-- decode stage modules
 	
@@ -111,14 +129,32 @@ component control_unit is
 			clk : in std_logic;
 			IN_CTRL_instr_in : in  STD_LOGIC_VECTOR (15 downto 0);
 
-			OUT_CTRL_EX : out  STD_LOGIC_VECTOR (7 downto 0);
+			OUT_CTRL_EX : out  STD_LOGIC_VECTOR (5 downto 0);
 			OUT_CTRL_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
-			OUT_CTRL_WB : out  STD_LOGIC_VECTOR (3 downto 0);
-			OUT_CTRL_R_INDEX1: out  STD_LOGIC_VECTOR (2 downto 0);
-			OUT_CTRL_R_INDEX2: out  STD_LOGIC_VECTOR (2 downto 0)
---			OUT_CTRL_instr_in : OUT  STD_LOGIC_VECTOR (15 downto 0)
+			OUT_CTRL_WB : out  STD_LOGIC_VECTOR (1 downto 0);
+			OUT_CTRL_RA_MUX_SEL: out  STD_LOGIC;
+			OUT_CTRL_IN_MUX_SEL: out  STD_LOGIC;
+			OUT_CTRL_SIGN_EXTEND_MUX_SEL: out  STD_LOGIC;
+			OUT_CTRL_WRITE_EN: out  STD_LOGIC;
+			OUT_CTRL_WRITE_INDEX: out  STD_LOGIC_VECTOR (2 downto 0)		
 			);
 			
+end component;
+
+
+component decode_stage is
+	Port
+	(
+		instr_in : in std_logic_vector(15 downto 0);
+
+		OUT_rd_index1 : out std_logic_vector(2 downto 0);
+		OUT_rd_index2 : out std_logic_vector(2 downto 0);
+		OUT_RA_index : out std_logic_vector(2 downto 0);
+		OUT_DISP_L : out std_logic_vector(8 downto 0);		
+		OUT_DISP_S : out std_logic_vector(5 downto 0);
+		OUT_C1 : out std_logic_vector(3 downto 0)
+
+	);
 end component;
 
 
@@ -142,24 +178,25 @@ end component;
     component DBUF is
     Port ( clk: in STD_LOGIC ;
 				reset: in std_logic;
-				IN_EX : in  STD_LOGIC_VECTOR (7 downto 0);
+				IN_EX : in  STD_LOGIC_VECTOR (5 downto 0);
 				IN_MEM : in  STD_LOGIC_VECTOR (3 downto 0);
-				IN_WB : in  STD_LOGIC_VECTOR (3 downto 0);	 
-
+				IN_WB : in  STD_LOGIC_VECTOR (1 downto 0);	 
+            IN_ra_index: in std_logic_vector(2 downto 0);
             IN_rb: in std_logic_vector(15 downto 0);
             IN_rc: in std_logic_vector(15 downto 0);
-
+				IN_c1 : in  STD_LOGIC_VECTOR (3 downto 0);
             IN_instruction: in std_logic_vector(15 downto 0);
-				PC_in : in std_logic_vector(6 downto 0);
+				PC_in : in std_logic_vector(15 downto 0);
 				
-				OUT_EX : out  STD_LOGIC_VECTOR (7 downto 0);
+            OUT_ra_index: out std_logic_vector(2 downto 0);
+				OUT_EX : out  STD_LOGIC_VECTOR (5 downto 0);
 				OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
-				OUT_WB : out  STD_LOGIC_VECTOR (3 downto 0);
+				OUT_WB : out  STD_LOGIC_VECTOR (1 downto 0);
             OUT_rb: out std_logic_vector(15 downto 0);
             OUT_rc: out std_logic_vector(15 downto 0);
-
+				OUT_c1 : out  STD_LOGIC_VECTOR (3 downto 0);
             OUT_instruction: out std_logic_vector(15 downto 0);
-				PC_out : out std_logic_vector(6 downto 0)
+				PC_out : out std_logic_vector(15 downto 0)
 				);
     end component;
 
@@ -184,19 +221,12 @@ end component;
 
 --	signal PC_out: std_logic_vector(6 downto 0);
 	signal INSTR_TO_FBUF: std_logic_vector(15 downto 0);
-	signal adder_to_FBUF: std_logic_vector(6 downto 0);
 	
-	signal enable_PC_Adder: std_logic;
+	signal PC_to_ROM_add : std_logic_vector(15 downto 0);
 	
-	signal PC_to_ROM_add : std_logic_vector(6 downto 0);
-	signal adder_to_PC :std_logic_vector(6 downto 0);
-	signal add_to_FBUF: std_logic_vector(6 downto 0);
-	
-	signal FBUF_PC_out: std_logic_vector(6 downto 0);
+	signal FBUF_OUT_PC: std_logic_vector(15 downto 0);
 	signal FBUF_instr_out: std_logic_vector(15 downto 0);
-	
-	signal CTRL_TO_REG1 : std_logic_vector(2 downto 0);
-	signal CTRL_TO_REG2 : std_logic_vector(2 downto 0);
+
 	
 
 --	--signals for FBUF to REG_FILE
@@ -226,36 +256,101 @@ end component;
 --	 signal S_ALU_OUT_2 : STD_LOGIC_VECTOR(15 DOWNTO 0);
 --	 
 	-- signals from ctrl unit to DBUF 
-	SIGNAL S_OUT_CTRL_EX :  STD_LOGIC_VECTOR (7 downto 0);
+	SIGNAL S_OUT_CTRL_EX :  STD_LOGIC_VECTOR (5 downto 0);
 	SIGNAL S_OUT_CTRL_MEM : STD_LOGIC_VECTOR (3 downto 0);
-	SIGNAL S_OUT_CTRL_WB :  STD_LOGIC_VECTOR (3 downto 0);
+	SIGNAL S_OUT_CTRL_WB :  STD_LOGIC_VECTOR (1 downto 0);
+			
+	SIGNAL OUT_DBUF_RA : STD_LOGIC_VECTOR (2 DOWNTO 0);
+	SIGNAL OUT_DBUF_C1 : STD_LOGIC_VECTOR (3 DOWNTO 0);
+	
+	
+	-- CONNECTIONS FOR PC_MUX
+	SIGNAL PC_SEL :  STD_LOGIC;
+	SIGNAL PC_FROM_EBUF : STD_LOGIC_VECTOR (15 downto 0);
+	SIGNAL PC_FROM_ADD :  STD_LOGIC_VECTOR (15 downto 0);
+	SIGNAL MUX_TO_PC_MODULE :  STD_LOGIC_VECTOR (15 downto 0);
 
+	-- CONNECTIONS FROM DECODER
+	SIGNAL DECODE_TO_RD_REG1 : STD_LOGIC_VECTOR (2 DOWNTO 0);
+	SIGNAL DECODE_TO_RD_REG2 : STD_LOGIC_VECTOR (2 DOWNTO 0);	
+	SIGNAL DECODE_OUT_RA : STD_LOGIC_VECTOR (2 DOWNTO 0);
+	SIGNAL DECODE_DISP_L_TO_EXTND : STD_LOGIC_VECTOR (8 DOWNTO 0);	
+	SIGNAL DECODE_DISP_S_TO_EXTND : STD_LOGIC_VECTOR (5 DOWNTO 0);
+	SIGNAL DECODE_C1_TO_FBUF : STD_LOGIC_VECTOR (3 DOWNTO 0);
+	
+	--	CONNECTIONS FROM RA_MUX
+	SIGNAL MUX_TO_RD_INDEX1: STD_LOGIC_VECTOR(2 DOWNTO 0);	
 
+	-- CONNECTIONS FOR CONTROL UNIT
+	SIGNAL OUT_CTRL_RA_MUX_SEL : STD_LOGIC;
+	SIGNAL OUT_CTRL_IN_MUX_SEL : STD_LOGIC;
+	SIGNAL OUT_CTRL_SIGN_EXTEND_MUX_SEL : STD_LOGIC;
+	SIGNAL OUT_CTRL_WRITE_EN : STD_LOGIC;
+	SIGNAL OUT_CTRL_WRITE_INDEX : STD_LOGIC_VECTOR (2 DOWNTO 0);
+	
+	-- CONNCECTIONS FOR IN_MUX
+	SIGNAL WRITE_MUX_TO_REG_FILE : STD_LOGIC_VECTOR (15 DOWNTO 0);
+	SIGNAL ALU_RESULT : STD_LOGIC_VECTOR (15 DOWNTO 0);		
+	SIGNAL WRITE_MUX_SEL : STD_LOGIC;
+--	SIGNAL IN_PORT : STD_LOGIC_VECTOR (15 DOWNTO 0);
+
+	
+	
 begin
+
+
+
+	MUX_PC: Mux2x1
+		generic map(n1_bits => PC_FROM_EBUF'length, n2_bits => PC_FROM_ADD'length, n3_bits => MUX_TO_PC_MODULE'length)
+		Port map(
+			SEL => PC_SEL, -- comes from FBUF
+			A  => PC_FROM_EBUF,
+			B  => PC_FROM_ADD,
+			X  => MUX_TO_PC_MODULE
+		);
+		
+		
+	MUX_READ_REG1: Mux2x1
+		generic map(n1_bits => DECODE_TO_RD_REG1'length, n2_bits => DECODE_OUT_RA'length, n3_bits => MUX_TO_RD_INDEX1'length)
+		Port map(
+			SEL => OUT_CTRL_RA_MUX_SEL, -- comes from ctrl unit
+			A  => DECODE_TO_RD_REG1,
+			B  => DECODE_OUT_RA,
+			X  => MUX_TO_RD_INDEX1
+		);
+
+
+	MUX_WRITE_SEL: Mux2x1
+		generic map(n1_bits => ALU_RESULT'length, n2_bits => IN_PORT'length, n3_bits => WRITE_MUX_TO_REG_FILE'length)
+		Port map(
+			SEL => OUT_CTRL_IN_MUX_SEL, -- comes from ctrl unit
+			A  => ALU_RESULT,
+			B  => IN_port,
+			X  => WRITE_MUX_TO_REG_FILE
+		);
 
 
 	-- fetch modules
 
-	PC_adder: counter
+	Adder: counter
     port map (
+		reset => P_reset,
 		PC_IN => PC_to_ROM_add,
-    	en_global => enable_PC_Adder,
-    	NEXT_PC => adder_to_PC,
-		current_pc =>adder_to_FBUF
+    	en_global => P_enable,
+    	NEXT_PC => PC_FROM_ADD
     );
 
 	PC : PC_module
 	port map(
-		PC_in => adder_to_PC,
+		PC_in => MUX_TO_PC_MODULE,
 		reset => P_reset,
 		en_global => P_enable,
 		clk => P_clock,
-		PC_out => PC_to_ROM_add,
-		out_en => enable_PC_Adder
+		PC_out => PC_to_ROM_add
 	);
 
 
-    I_MEM: ROM_VHDL
+    ROM: ROM_VHDL
     	port map (
 			addr => PC_to_ROM_add,
 			clk => P_clock,
@@ -267,13 +362,13 @@ begin
 			clk => P_clock,
 			reset => P_reset,
 			instr_in => INSTR_TO_FBUF,
-			PC_in => adder_to_FBUF,
-			PC_out => FBUF_PC_out,
+			PC_in => PC_FROM_ADD,
+			PC_out => FBUF_OUT_PC,
 			instr_out => FBUF_instr_out
 		);
 
 
-Ctrl_unit: control_unit
+	CTRL_DEC: control_unit
     Port map ( 
 			clk => P_clock,
 			RST   => P_reset,
@@ -282,11 +377,29 @@ Ctrl_unit: control_unit
 			OUT_CTRL_EX => S_OUT_CTRL_EX,
 			OUT_CTRL_MEM => S_OUT_CTRL_MEM,
 			OUT_CTRL_WB => S_OUT_CTRL_WB,
-			OUT_CTRL_R_INDEX1 => CTRL_TO_REG1,
-			OUT_CTRL_R_INDEX2 => CTRL_TO_REG2
+			OUT_CTRL_RA_MUX_SEL => OUT_CTRL_RA_MUX_SEL,
+			OUT_CTRL_IN_MUX_SEL => OUT_CTRL_IN_MUX_SEL,
+			OUT_CTRL_SIGN_EXTEND_MUX_SEL => OUT_CTRL_SIGN_EXTEND_MUX_SEL,
+			OUT_CTRL_WRITE_EN => OUT_CTRL_WRITE_EN,
+			OUT_CTRL_WRITE_INDEX =>	OUT_CTRL_WRITE_INDEX
 
 		);
+		
+
 			
+
+ DECODER1: decode_stage 
+	Port map (
+		instr_in => FBUF_instr_out,
+
+		OUT_rd_index1  => DECODE_TO_RD_REG1,
+		OUT_rd_index2  => DECODE_TO_RD_REG2,
+		OUT_RA_index  => DECODE_OUT_RA,
+		OUT_DISP_L  => DECODE_DISP_L_TO_EXTND,		
+		OUT_DISP_S => DECODE_DISP_S_TO_EXTND,
+		OUT_C1  => DECODE_C1_TO_FBUF
+
+	);
 
 
     reg_file: register_file
@@ -294,37 +407,42 @@ Ctrl_unit: control_unit
     		rst  => P_reset,
     		clk => P_clock,
 
-    		rd_address_1 => CTRL_TO_REG1,
+    		rd_address_1 => MUX_TO_RD_INDEX1,
     		data_out_1 => Reg_file_data1,
 
-    		rd_address_2 => CTRL_TO_REG2,
+    		rd_address_2 => DECODE_TO_RD_REG2,
     		data_out_2 => Reg_file_data2,
 
-    		wr_address => (others => '0'),
-    		data_in => (others => '0'),
-    		reg_wr_en => '0'
+    		wr_address => OUT_CTRL_WRITE_INDEX,
+    		data_in => WRITE_MUX_TO_REG_FILE,
+    		reg_wr_en => OUT_CTRL_WRITE_EN
     	);
 
     decode_buffer: DBUF
         port map (
-                clk => P_clock,
-					 reset => P_reset,
+				clk => P_clock,
+				reset => P_reset,
 				IN_EX => S_OUT_CTRL_EX,
 				IN_MEM => S_OUT_CTRL_MEM,
 				IN_WB => S_OUT_CTRL_WB,	 
             IN_rb => Reg_file_data1,
             IN_rc => Reg_file_data2,
+				IN_ra_index => DECODE_OUT_RA,
             IN_instruction => FBUF_instr_out,
-				PC_in => FBUF_PC_out,
+				PC_in => FBUF_OUT_PC,
+				IN_c1 => DECODE_C1_TO_FBUF,
 				
+				OUT_ra_index => OUT_DBUF_RA,
 				OUT_EX => OUT_EX,
 				OUT_MEM => OUT_MEM,
 				OUT_WB => OUT_WB,		
             OUT_rb => P_OUT_VAL_1,
             OUT_rc => P_OUT_VAL_2, 
             OUT_instruction => OUT_INSTRUC,
-				PC_out => P_PC_OUT			 
+				PC_out => P_PC_OUT,
+				OUT_c1 => OUT_DBUF_C1
             );
+
 --
 --    ALU1: alu
 --        Port map

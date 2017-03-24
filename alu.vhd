@@ -11,7 +11,7 @@ entity alu is
 		P_IN_en : in std_logic;
 		P_IN_clk : in std_logic;
 
-		P_IN_alu_mode : in std_logic_vector(6 downto 0);
+		P_IN_alu_mode : in std_logic_vector(2 downto 0);
 		P_IN_arg1 : in std_logic_vector(15 downto 0);
 		P_IN_arg2 : in std_logic_vector(15 downto 0);
 		P_OUT_result : out std_logic_vector(15 downto 0);
@@ -30,7 +30,7 @@ architecture alu of alu is
 begin
 	process(P_IN_clk)
 		-- this will create a 3 bit signal
-		variable int_ALU_MODE : integer range 0 to 127;
+		variable int_ALU_MODE : integer range 0 to 7;
 	begin
 		if rising_edge(P_IN_clk) then
 			if (P_IN_rst = '1') then
