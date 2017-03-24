@@ -45,7 +45,7 @@ entity processor is
 			 	P_OUT_VAL_1 : out std_logic_vector(15 downto 0);
 			 	P_OUT_VAL_2 : out std_logic_vector(15 downto 0);
 			
---				 P_OUT_C1 : out std_logic_vector(3 downto 0);
+				 P_OUT_C1 : out std_logic_vector(3 downto 0);
                 -- to write back
                 --P_out_ra : out std_logic_vector(2 downto 0);
 					 
@@ -71,9 +71,9 @@ architecture Behavioral of processor is
 			n3_bits: integer := 16
 	);
 		 Port ( SEL : IN STD_LOGIC; 
-					A : IN std_logic_vector(15 downto 0);
-				  B : IN std_logic_vector(15 downto 0);
-				  X : out  STD_LOGIC_VECTOR(15 downto 0));
+			A : IN std_logic_vector(n1_bits-1 downto 0);
+           B : IN std_logic_vector(n2_bits-1 downto 0);
+           X : out  STD_LOGIC_VECTOR(n3_bits-1 downto 0));
 	end component;
 
 -- fetch stage modules
@@ -219,6 +219,14 @@ end component;
 --    end component;
 
 
+
+component mux_reg is
+    Port ( sel : in  STD_LOGIC;
+           a : in  STD_LOGIC_VECTOR (2 downto 0);
+           b : in  STD_LOGIC_VECTOR (2 downto 0);
+           x : out  STD_LOGIC_VECTOR (2 downto 0));
+end component;
+
 --	signal PC_out: std_logic_vector(6 downto 0);
 	signal INSTR_TO_FBUF: std_logic_vector(15 downto 0);
 	
@@ -304,8 +312,8 @@ begin
 		generic map(n1_bits => PC_FROM_EBUF'length, n2_bits => PC_FROM_ADD'length, n3_bits => MUX_TO_PC_MODULE'length)
 		Port map(
 			SEL => PC_SEL, -- comes from FBUF
-			A  => PC_FROM_EBUF,
-			B  => PC_FROM_ADD,
+			A  => PC_FROM_ADD,
+			B  =>  PC_FROM_EBUF,
 			X  => MUX_TO_PC_MODULE
 		);
 		
@@ -318,6 +326,8 @@ begin
 			B  => DECODE_OUT_RA,
 			X  => MUX_TO_RD_INDEX1
 		);
+
+--MUX_READ_REG1 : mux_reg Port map( OUT_CTRL_RA_MUX_SEL, DECODE_TO_RD_REG1, DECODE_OUT_RA, MUX_TO_RD_INDEX1);
 
 
 	MUX_WRITE_SEL: Mux2x1
@@ -440,7 +450,8 @@ begin
             OUT_rc => P_OUT_VAL_2, 
             OUT_instruction => OUT_INSTRUC,
 				PC_out => P_PC_OUT,
-				OUT_c1 => OUT_DBUF_C1
+				--OUT_c1 => OUT_DBUF_C1
+				OUT_c1 => P_OUT_C1
             );
 
 --

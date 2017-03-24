@@ -56,6 +56,8 @@ begin
 					OUT_rc <= (others => '0');
 					OUT_instruction <= (others => '0');
 					PC_out <= (others => '0');
+					OUT_c1 <= (others => '0');
+					OUT_ra_index <= (others => '0');
 			else
 					OUT_EX <= IN_EX;
 					OUT_MEM <= IN_MEM;
@@ -64,6 +66,8 @@ begin
 					OUT_rc <= IN_rc;
 					OUT_instruction <= IN_instruction;
 					PC_out <= PC_in;
+					OUT_c1 <= IN_c1;
+					OUT_ra_index <= IN_ra_index;
 			end if;
 		end if;
 	END PROCESS;
