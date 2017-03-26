@@ -36,7 +36,7 @@ entity control_unit is
 			clk : in std_logic;
 			IN_CTRL_instr_in : in  STD_LOGIC_VECTOR (15 downto 0);
 
-			OUT_CTRL_EX : out  STD_LOGIC_VECTOR (5 downto 0);
+			OUT_CTRL_EX : out  STD_LOGIC_VECTOR (7 downto 0);
 			OUT_CTRL_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
 			OUT_CTRL_WB : out  STD_LOGIC_VECTOR (1 downto 0);
 			OUT_CTRL_RA_MUX_SEL: out  STD_LOGIC;
@@ -72,17 +72,17 @@ begin
 	with int_op_code select
 		OUT_CTRL_EX <=
 		-- A instructions
--- alu_en & alu_bran_sel & alu_disp_sel & alu_mode
-			'1' & '0' & '0' & "001" when 1,
-			'1' & '0' & '0' & "010" when 2,
-			'1' & '0' & '0' & "011" when 3,			
-			'1' & '0' & '0' & "100" when 4,							
-			'1' & '0' & '0' & "101" when 5,
-			'1' & '0' & '0' & "110" when 6, 	-- Right SHIFT by c1 times
-			'1' & '0' & '0' & "111" when 7, -- TEST instruction for flags
-			'0' & '0' & '0' & "000" when 32,	-- OUT, send instruction to out port
-			'0' & '0' & '0' & "000" when 33, 	-- IN, send instruction to IN port and into reg_file
-			'0' & '0' & '0' & "000" when others;
+-- alu_en & alu2_en & alu_bran_sel & alu_disp_sel & alu_mode
+			'1' & '0' & '0' & "00" & "001" when 1,
+			'1' & '0' & '0' & "00" & "010" when 2,
+			'1' & '0' & '0' & "00" & "011" when 3,			
+			'1' & '0' & '0' & "00" & "100" when 4,							
+			'1' & '0' & '0' & "00" & "101" when 5,
+			'1' & '0' & '0' & "00" & "110" when 6, 	-- Right SHIFT by c1 times
+			'1' & '0' & '0' & "00" & "111" when 7, -- TEST instruction for flags
+			'0' & '0' & '0' & "00" & "000" when 32,	-- OUT, send instruction to out port
+			'0' & '0' & '0' & "00" & "000" when 33, 	-- IN, send instruction to IN port and into reg_file
+			'0' & '0' & '0' & "00" & "000" when others;
 			
 	with int_op_code select		
 		OUT_CTRL_MEM <= 

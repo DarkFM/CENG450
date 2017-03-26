@@ -52,17 +52,17 @@ begin
 --	 if rising_edge(clock) then
 		if reset = '1' then
  	    		Pre_Q <= 0;
---		elsif en_global = '1' then	
-		else
-			Pre_Q <= Pre_Q + 1;
+		elsif en_global = '1' then	
 --		else
---			Pre_Q <= 0;
+			Pre_Q <= Pre_Q + 1;
+		else
+			Pre_Q <= 0;
 
 	   end if;
 --	 end if;
  end process;	
  
-	 NEXT_PC <= conv_std_logic_vector(Pre_Q,7);
+	 NEXT_PC <= conv_std_logic_vector(Pre_Q,16);
 --		current_pc <= PC_IN;
     -- concurrent assignment statement
 
