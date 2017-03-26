@@ -77,12 +77,13 @@ begin
 			'1' & '0' & '0' & "00" & "010" when 2,
 			'1' & '0' & '0' & "00" & "011" when 3,			
 			'1' & '0' & '0' & "00" & "100" when 4,							
-			'1' & '0' & '0' & "00" & "101" when 5,
-			'1' & '0' & '0' & "00" & "110" when 6, 	-- Right SHIFT by c1 times
+			'1' & '0' & '0' & "10" & "101" when 5,
+			'1' & '0' & '0' & "10" & "110" when 6, 	-- Right SHIFT by c1 times
 			'1' & '0' & '0' & "00" & "111" when 7, -- TEST instruction for flags
 			'0' & '0' & '0' & "00" & "000" when 32,	-- OUT, send instruction to out port
 			'0' & '0' & '0' & "00" & "000" when 33, 	-- IN, send instruction to IN port and into reg_file
 			'0' & '0' & '0' & "00" & "000" when others;
+			-- NEED TO CHANGE alu_disp_sel FOR WHEN IT IS A BRANCH
 			
 	with int_op_code select		
 		OUT_CTRL_MEM <= 

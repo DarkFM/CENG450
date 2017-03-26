@@ -38,7 +38,7 @@ entity DBUF is
             OUT_rb: out std_logic_vector(15 downto 0);
             OUT_rc: out std_logic_vector(15 downto 0);
 				OUT_c1 : out  STD_LOGIC_VECTOR (3 downto 0);
-            OUT_instruction: out std_logic_vector(15 downto 0);
+            --OUT_instruction: out std_logic_vector(15 downto 0);
 				PC_out : out std_logic_vector(15 downto 0);
 				OUT_DISP : out std_logic_vector(15 downto 0)
         );
@@ -71,7 +71,7 @@ begin
 					OUT_WB <= (others => '0');
 					OUT_rb <= (others => '0');
 					OUT_rc <= (others => '0');
-					OUT_instruction <= (others => '0');
+					--OUT_instruction <= (others => '0');
 					PC_out <= (others => '0');
 					OUT_c1 <= (others => '0');
 					OUT_ra_index <= (others => '0');
@@ -87,7 +87,7 @@ begin
 					OUT_WB <= IN_WB;
 					OUT_rb <= IN_rb;
 					OUT_rc <= IN_rc;
-					OUT_instruction <= IN_instruction;
+					--OUT_instruction <= IN_instruction;
 					PC_out <= PC_in;
 					OUT_c1 <= IN_c1;
 					OUT_ra_index <= IN_ra_index;

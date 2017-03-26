@@ -30,7 +30,7 @@ begin
 	
 process(clk) begin
 
-	if falling_edge(clk) then
+	if rising_edge(clk) then
 		if(reset = '1') then
 			temp_pc <= (others => '0'); 
 --			out_en <= '0';
