@@ -2,7 +2,7 @@
 -- Company: 
 -- Engineer:
 --
--- Create Date:   23:23:10 03/25/2017
+-- Create Date:   20:05:58 03/26/2017
 -- Design Name:   
 -- Module Name:   /home/cbest/CENG450/Processor/tb_decode.vhd
 -- Project Name:  processor_proj
@@ -120,7 +120,6 @@ BEGIN
 		IN_port	<= X"0AAA";
       wait for P_clock_period*30;		
 		P_enable <= '0';
-      wait for P_clock_period*10;
 
       -- insert stimulus here 
 

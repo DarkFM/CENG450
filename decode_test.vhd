@@ -115,7 +115,8 @@ component control_unit is
 			OUT_CTRL_IN_MUX_SEL: out  STD_LOGIC;
 			OUT_CTRL_SIGN_EXTEND_MUX_SEL: out  STD_LOGIC;
 			OUT_CTRL_WRITE_EN: out  STD_LOGIC;
-			OUT_CTRL_WRITE_INDEX: out  STD_LOGIC_VECTOR (2 downto 0)		
+			OUT_CTRL_WRITE_INDEX: out  STD_LOGIC_VECTOR (2 downto 0)	;
+			OUT_PORT_EN : OUT STD_LOGIC			
 			);
 			
 end component;
@@ -180,7 +181,7 @@ end component;
 				OUT_WB : out  STD_LOGIC_VECTOR (1 downto 0);
             OUT_rb: out std_logic_vector(15 downto 0);
             OUT_rc: out std_logic_vector(15 downto 0);
-				OUT_c1 : out  STD_LOGIC_VECTOR (3 downto 0);
+				OUT_c1 : out  STD_LOGIC_VECTOR (15 downto 0);
            -- OUT_instruction: out std_logic_vector(15 downto 0);
 				PC_out : out std_logic_vector(15 downto 0);
 				OUT_DISP : out std_logic_vector(15 downto 0)
@@ -195,6 +196,21 @@ component sign_extend is
            EXTEND_OUT : out  STD_LOGIC_VECTOR (15 downto 0));
 end component;
 
+component FLAGS is
+    Port ( DATA_IN : in  STD_LOGIC_VECTOR (15 downto 0);
+           Z_FLAG : out  STD_LOGIC;
+           N_FLAG : out  STD_LOGIC;
+           ENABLE : in  STD_LOGIC
+		  );
+end component;
+
+
+COMPONENT OUT_BOX is
+    Port ( OUT_REG_IN : in  STD_LOGIC_VECTOR (15 downto 0);
+           OUT_REG_OUT : out  STD_LOGIC_VECTOR (15 downto 0);
+			  ENABLE: IN STD_LOGIC);
+end COMPONENT;
+
 
 --------------------------------------------------------------------
 --			EXECUTE STAGE
@@ -205,7 +221,7 @@ component alu is
     	(
     		P_IN_rst : in std_logic;
     		P_IN_en : in std_logic;
---    		P_IN_clk : in std_logic;
+    		P_IN_clk : in std_logic;
 
     		P_IN_alu_mode : in std_logic_vector(2 downto 0);
     		P_IN_arg1 : in std_logic_vector(15 downto 0);
@@ -242,6 +258,8 @@ component EBUF is
            IN_ALU_RESULT : in  STD_LOGIC_VECTOR (15 downto 0);
            IN_Z_FLAG : in  STD_LOGIC;
            IN_N_FLAG : in  STD_LOGIC;
+           IN_BRN_Z_FLAG : in  STD_LOGIC;
+           IN_BRN_N_FLAG : in  STD_LOGIC;			  
            IN_DATA2 : in  STD_LOGIC_VECTOR (15 downto 0);
            IN_RA_INDEX : in  STD_LOGIC_VECTOR (2 downto 0);
 			  
@@ -250,6 +268,8 @@ component EBUF is
            OUT_ALU_RESULT : out  STD_LOGIC_VECTOR (15 downto 0);
            OUT_Z_FLAG : out  STD_LOGIC;
            OUT_N_FLAG : out  STD_LOGIC;
+           OUT_BRN_Z_FLAG : out  STD_LOGIC;
+           OUT_BRN_N_FLAG : out  STD_LOGIC;					  
            OUT_DATA2 : out  STD_LOGIC_VECTOR (15 downto 0);			  
            OUT_RA_INDEX : out  STD_LOGIC_VECTOR (2 downto 0));
 end component;
@@ -304,6 +324,7 @@ end component;
 	SIGNAL OUT_CTRL_SIGN_EXTEND_MUX_SEL : STD_LOGIC;
 	SIGNAL OUT_CTRL_WRITE_EN : STD_LOGIC;
 	SIGNAL OUT_CTRL_WRITE_INDEX : STD_LOGIC_VECTOR (2 DOWNTO 0);
+	SIGNAL OUT_PORT_ENABLE : STD_LOGIC;
 	
 	-- CONNCECTIONS FOR IN_MUX
 	SIGNAL WRITE_MUX_TO_REG_FILE : STD_LOGIC_VECTOR (15 DOWNTO 0);
@@ -330,7 +351,7 @@ end component;
 
 	SIGNAL DBUF_DATA2: STD_LOGIC_VECTOR(15 downto 0);
 	SIGNAL  DBUF_DISP : STD_LOGIC_VECTOR(15 DOWNTO 0);
-	SIGNAL DBUF_C1 : STD_LOGIC_VECTOR(3 DOWNTO 0);
+	SIGNAL DBUF_C1 : STD_LOGIC_VECTOR(15 DOWNTO 0);
 	SIGNAL MUX_TO_ALU_IN_2 :  STD_LOGIC_VECTOR(15 DOWNTO 0);
 	
 	SIGNAL DBUF_TO_EBUF_MEM : STD_LOGIC_VECTOR(3 DOWNTO 0);
@@ -342,10 +363,12 @@ end component;
 	SIGNAL ALU_TO_EBUF_N_FLAG: STD_LOGIC;
 	SIGNAL ALU_TO_EBUF_RESULT:  STD_LOGIC_VECTOR(15 DOWNTO 0);
 	
+	SIGNAL ALU_TO_EBUF_BRN_Z_FLAG: STD_LOGIC;
+	SIGNAL ALU_TO_EBUF_BRN_N_FLAG: STD_LOGIC;
 	
-	-- DEFAULT VALUES FOR MUX'S
-	SIGNAL ALU2_MODE_CONST:  STD_LOGIC_VECTOR(2 DOWNTO 0);	
-	SIGNAL ALU2_ARG2:  STD_LOGIC_VECTOR(15 DOWNTO 0);	
+--	-- DEFAULT VALUES FOR MUX'S
+--	SIGNAL ALU2_MODE_CONST:  STD_LOGIC_VECTOR(2 DOWNTO 0);	
+--	SIGNAL ALU2_ARG2:  STD_LOGIC_VECTOR(15 DOWNTO 0);	
 	
 
 
@@ -353,6 +376,9 @@ begin
 
 PC_SEL <= '0';
 PC_FROM_EBUF <= (others => '0');
+--ALU2_ARG2 <=  (others => '0');
+--ALU2_MODE_CONST <= "111";
+
 
 	MUX_PC: Mux2x1
 		generic map(n1_bits => PC_FROM_EBUF'length, n2_bits => PC_FROM_ADD'length, n3_bits => MUX_TO_PC_MODULE'length)
@@ -434,7 +460,9 @@ MUX_WRITE_SEL: Mux2x1
 			OUT_CTRL_IN_MUX_SEL => OUT_CTRL_IN_MUX_SEL,
 			OUT_CTRL_SIGN_EXTEND_MUX_SEL => OUT_CTRL_SIGN_EXTEND_MUX_SEL,
 			OUT_CTRL_WRITE_EN => OUT_CTRL_WRITE_EN,
-			OUT_CTRL_WRITE_INDEX =>	OUT_CTRL_WRITE_INDEX
+			OUT_CTRL_WRITE_INDEX =>	OUT_CTRL_WRITE_INDEX,
+			OUT_PORT_EN => OUT_PORT_ENABLE
+			
 
 		);
 		
@@ -480,6 +508,12 @@ SIGN_EX: sign_extend
            SEL  => OUT_CTRL_SIGN_EXTEND_MUX_SEL,
            EXTEND_OUT  => SIGN_EX_TO_DBUF
 		  );
+
+PORT_OUT: OUT_BOX
+    Port map ( OUT_REG_IN => Reg_file_data1,
+           OUT_REG_OUT => OUT_port,
+			  ENABLE => OUT_PORT_ENABLE
+		  );
 		
 		
 
@@ -513,6 +547,10 @@ DBUF1: DBUF
 			OUT_DISP => DBUF_DISP,
 			OUT_c1 => DBUF_C1
 			);
+			
+
+--ALU2_DEFAULTS: ALU_2_DEFAULTS 
+--    Port map( ALU2_MODE_CONST, ALU2_ARG2);			
 
 --------------------------------------------------------------------
 --			EXECUTE STAGE
@@ -527,10 +565,14 @@ MUX_ALU_IN_2: Mux3x1
 	generic map(n1_bits => DBUF_DATA2'length, n2_bits => DBUF_DISP'length, n3_bits => DBUF_C1'length, n4_bits => MUX_TO_ALU_IN_2'length)
     Port map ( DBUF_ALU_DISP_SEL, DBUF_DATA2,  DBUF_DISP, DBUF_C1, MUX_TO_ALU_IN_2);
 
-
+			
+FLAG_CHECK: FLAGS
+    Port map( DATA_IN => DBUF_DATA1, Z_FLAG => ALU_TO_EBUF_BRN_Z_FLAG, N_FLAG => ALU_TO_EBUF_BRN_N_FLAG, ENABLE => DBUF_ALU2_EN);
+			
 
 ALU_MAIN: alu
 	port map(
+			P_IN_clk => P_clock,
             P_IN_rst => P_reset,
             P_IN_en => DBUF_ALU_EN,
 
@@ -539,26 +581,26 @@ ALU_MAIN: alu
             P_IN_arg1 => MUX_TO_ALU_IN_1,
             P_IN_arg2 => MUX_TO_ALU_IN_2,
             P_OUT_result => ALU_TO_EBUF_RESULT,   -- result to processor
-            P_OUT_z_flag => open,-- result to processor
-            P_OUT_n_flag => open, -- result to processor
+            P_OUT_z_flag => ALU_TO_EBUF_Z_FLAG,-- result to processor
+            P_OUT_n_flag => ALU_TO_EBUF_N_FLAG, -- result to processor
             P_OUT_p_flag => open -- result to processor	
 		
 	);
 
- ALU2: alu
-	  Port map (
-			P_IN_rst => P_reset,
-			P_IN_en => '1',--DBUF_ALU2_EN,
-
-			P_IN_alu_mode => ALU2_MODE_CONST,
-			P_IN_arg1 => DBUF_DATA1 ,
-			P_IN_arg2 => ALU2_ARG2,
-			P_OUT_result => open,   
-			P_OUT_z_flag => ALU_TO_EBUF_Z_FLAG,
-			P_OUT_n_flag => ALU_TO_EBUF_N_FLAG,
-			P_OUT_p_flag => open
-
-	  );
+-- ALU2: alu
+--	  Port map (
+--			P_IN_rst => P_reset,
+--			P_IN_en => '1',--DBUF_ALU2_EN,
+--
+--			P_IN_alu_mode => ALU2_MODE_CONST,
+--			P_IN_arg1 => DBUF_DATA1 ,
+--			P_IN_arg2 => ALU2_ARG2,
+--			P_OUT_result => open,   
+--			P_OUT_z_flag => ALU_TO_EBUF_Z_FLAG,
+--			P_OUT_n_flag => ALU_TO_EBUF_N_FLAG,
+--			P_OUT_p_flag => open
+--
+--	  );
 	  
 	  
 EBUF1: EBUF 
@@ -571,6 +613,8 @@ EBUF1: EBUF
            IN_ALU_RESULT  => ALU_TO_EBUF_RESULT,
            IN_Z_FLAG  => ALU_TO_EBUF_Z_FLAG,
            IN_N_FLAG  => ALU_TO_EBUF_N_FLAG,
+           IN_BRN_Z_FLAG => ALU_TO_EBUF_BRN_Z_FLAG,
+           IN_BRN_N_FLAG  => ALU_TO_EBUF_BRN_N_FLAG,				  
            IN_DATA2  => DBUF_DATA2,
            IN_RA_INDEX  => DBUF_RA_INDEX ,
 			  
@@ -579,6 +623,8 @@ EBUF1: EBUF
            OUT_ALU_RESULT => OUT_ALU_RESULT,
            OUT_Z_FLAG  => OUT_Z_FLAG,
            OUT_N_FLAG  => OUT_N_FLAG,
+           OUT_BRN_Z_FLAG => open,
+           OUT_BRN_N_FLAG  => open,			  
            OUT_DATA2  => OUT_DATA2,			  
            OUT_RA_INDEX  => OUT_RA_INDEX
 	  );	  

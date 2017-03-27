@@ -43,7 +43,8 @@ entity control_unit is
 			OUT_CTRL_IN_MUX_SEL: out  STD_LOGIC;
 			OUT_CTRL_SIGN_EXTEND_MUX_SEL: out  STD_LOGIC;
 			OUT_CTRL_WRITE_EN: out  STD_LOGIC;
-			OUT_CTRL_WRITE_INDEX: out  STD_LOGIC_VECTOR (2 downto 0)		
+			OUT_CTRL_WRITE_INDEX: out  STD_LOGIC_VECTOR (2 downto 0);	
+			OUT_PORT_EN : OUT STD_LOGIC
 			
 
 
@@ -62,9 +63,10 @@ architecture Behavioral of control_unit is
 	
 
 
-	signal int_op_code : integer;
+	signal int_op_code : integer := 0;
 
 begin
+	
 
 		int_op_code <= to_integer(unsigned(A_OP_CODE));
 		
@@ -88,9 +90,10 @@ begin
 	with int_op_code select		
 		OUT_CTRL_MEM <= 
 				-- A instructions
-				"0000" when 1 to 4,
-				"0000" when 5 to 6,
-				"0000" when 7 to 33,
+				"1000" when 1 to 4,
+				"1000" when 5 to 7,
+				"0000" when 32,
+				"1000" when 33,
 				"0000" when others;
 				
 	with int_op_code select			
@@ -130,6 +133,11 @@ begin
 			OUT_CTRL_WRITE_INDEX <=
 				A_RA when 33, -- for IN insrutuction
 				(others => '0') when others;
+							
+	with int_op_code select	
+			OUT_PORT_EN <=
+				'1' when 5 TO 6, -- for OUT insrutuction
+				'0' when others;				
 		
 --	OUT_CTRL_R_INDEX1 <= A_RB;
 --	OUT_CTRL_R_INDEX2 <= A_RC;

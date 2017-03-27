@@ -39,6 +39,8 @@ entity EBUF is
            IN_ALU_RESULT : in  STD_LOGIC_VECTOR (15 downto 0);
            IN_Z_FLAG : in  STD_LOGIC;
            IN_N_FLAG : in  STD_LOGIC;
+           IN_BRN_Z_FLAG : in  STD_LOGIC;
+           IN_BRN_N_FLAG : in  STD_LOGIC;			  
            IN_DATA2 : in  STD_LOGIC_VECTOR (15 downto 0);
            IN_RA_INDEX : in  STD_LOGIC_VECTOR (2 downto 0);
 			  
@@ -47,6 +49,8 @@ entity EBUF is
            OUT_ALU_RESULT : out  STD_LOGIC_VECTOR (15 downto 0);
            OUT_Z_FLAG : out  STD_LOGIC;
            OUT_N_FLAG : out  STD_LOGIC;
+           OUT_BRN_Z_FLAG : out  STD_LOGIC;
+           OUT_BRN_N_FLAG : out  STD_LOGIC;					  
            OUT_DATA2 : out  STD_LOGIC_VECTOR (15 downto 0);			  
            OUT_RA_INDEX : out  STD_LOGIC_VECTOR (2 downto 0));
 end EBUF;
@@ -69,12 +73,16 @@ begin
            OUT_N_FLAG <= '0';
 			  OUT_DATA2 <= (others => '0');
            OUT_RA_INDEX <= (others => '0');
+           OUT_BRN_Z_FLAG <= '0';
+           OUT_BRN_N_FLAG <= '0';		  
 		  else
 			  OUT_MEM <= IN_MEM;
            OUT_WB <= IN_WB;
            OUT_ALU_RESULT <= IN_ALU_RESULT ;
            OUT_Z_FLAG <= IN_Z_FLAG;
            OUT_N_FLAG <= IN_N_FLAG;
+			  OUT_BRN_Z_FLAG <= IN_BRN_Z_FLAG;
+           OUT_BRN_N_FLAG <= IN_BRN_N_FLAG;
 			  OUT_DATA2 <= IN_DATA2;
            OUT_RA_INDEX <= IN_RA_INDEX;
 		  end if;

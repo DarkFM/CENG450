@@ -9,7 +9,7 @@ entity alu is
 	(
 		P_IN_rst : in std_logic;
 		P_IN_en : in std_logic;
---		P_IN_clk : in std_logic;
+		P_IN_clk : in std_logic;
 
 		P_IN_alu_mode : in std_logic_vector(2 downto 0);
 		P_IN_arg1 : in std_logic_vector(15 downto 0);

@@ -1,6 +1,7 @@
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use ieee.numeric_std.all;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -37,7 +38,7 @@ entity DBUF is
 				OUT_WB : out  STD_LOGIC_VECTOR (1 downto 0);
             OUT_rb: out std_logic_vector(15 downto 0);
             OUT_rc: out std_logic_vector(15 downto 0);
-				OUT_c1 : out  STD_LOGIC_VECTOR (3 downto 0);
+				OUT_c1 : out  STD_LOGIC_VECTOR (15 downto 0);
             --OUT_instruction: out std_logic_vector(15 downto 0);
 				PC_out : out std_logic_vector(15 downto 0);
 				OUT_DISP : out std_logic_vector(15 downto 0)
@@ -89,7 +90,7 @@ begin
 					OUT_rc <= IN_rc;
 					--OUT_instruction <= IN_instruction;
 					PC_out <= PC_in;
-					OUT_c1 <= IN_c1;
+					OUT_c1 <=  std_logic_vector(resize(signed(IN_c1), OUT_c1'length));
 					OUT_ra_index <= IN_ra_index;
 					OUT_DISP <= IN_DISP ;
 			end if;
