@@ -29,11 +29,14 @@ end alu;
 architecture alu of alu is
 begin
 --	process(P_IN_clk)
+--				P_OUT_z_flag <= '0';
+--				P_OUT_n_flag <= '0';
 	process(P_IN_en, P_IN_arg1, P_IN_arg2, P_IN_alu_mode,P_IN_rst)
 		-- this will create a 3 bit signal
 		variable int_ALU_MODE : integer range 0 to 7;
 	begin
 --		if rising_edge(P_IN_clk) then
+
 			if (P_IN_rst = '1') then
 				P_OUT_result <= (others => '0');
 				P_OUT_z_flag <= '0';
@@ -45,7 +48,8 @@ begin
 				case int_ALU_MODE is
 					when 0 =>
 						-- !!! should never happen; would like to throw an exception here !!!
-						null;
+						P_OUT_result <= P_IN_arg1;
+--						null;
 					when 1 => P_OUT_result <= std_logic_vector(unsigned(P_IN_arg1) + unsigned(P_IN_arg2));
 					when 2 => P_OUT_result <= std_logic_vector(unsigned(P_IN_arg1) - unsigned(P_IN_arg2));
 					when 3 => P_OUT_result <= std_logic_vector(resize(unsigned(P_IN_arg1) * unsigned(P_IN_arg2), 16));
@@ -71,6 +75,7 @@ begin
 						else
 							P_OUT_p_flag <= '0';
 						end if;
+						
 					when others => null;
 				end case;
 			end if;

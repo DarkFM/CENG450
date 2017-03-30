@@ -44,7 +44,11 @@ entity EBUF is
            IN_DATA2 : in  STD_LOGIC_VECTOR (15 downto 0);
            IN_RA_INDEX : in  STD_LOGIC_VECTOR (2 downto 0);
 			  
-           OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
+--           OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
+			  OUT_MEM_WR_EN : OUT STD_LOGIC;
+			  OUT_MEM_READ_EN: OUT STD_LOGIC;
+			  OUT_MEM_Z_CHECK: OUT STD_LOGIC;
+			  OUT_MEM_N_CHECK: OUT STD_LOGIC;
            OUT_WB : out  STD_LOGIC_VECTOR (1 downto 0);
            OUT_ALU_RESULT : out  STD_LOGIC_VECTOR (15 downto 0);
            OUT_Z_FLAG : out  STD_LOGIC;
@@ -56,8 +60,10 @@ entity EBUF is
 end EBUF;
 
 architecture Behavioral of EBUF is
---	alias EX_ALU_EN is IN_EX(7);
---	aliaS EX_ALU_BRN_SEL IS IN_EX;
+	alias MEM_WR_EN is IN_MEM(3);
+	alias MEM_READ_EN IS IN_MEM(2);
+	alias MEM_Z_CHECK is IN_MEM(1);
+	alias MEM_N_CHECK is IN_MEM(0);
 
 
 begin
@@ -66,7 +72,7 @@ begin
 	
 		if rising_edge(clk) then
 			if reset = '1' then
-			  OUT_MEM <= (others => '0');
+--			  OUT_MEM <= (others => '0');
            OUT_WB <= (others => '0');
            OUT_ALU_RESULT <= (others => '0') ;
            OUT_Z_FLAG <= '0';
@@ -74,11 +80,19 @@ begin
 			  OUT_DATA2 <= (others => '0');
            OUT_RA_INDEX <= (others => '0');
            OUT_BRN_Z_FLAG <= '0';
-           OUT_BRN_N_FLAG <= '0';		  
+           OUT_BRN_N_FLAG <= '0';
+			  OUT_MEM_WR_EN <= '0';
+			  OUT_MEM_READ_EN <= '0';	
+			  OUT_MEM_Z_CHECK <= '0';
+			  OUT_MEM_N_CHECK <= '0';
 		  else
-			  OUT_MEM <= IN_MEM;
+--			  OUT_MEM <= IN_MEM;
+			  OUT_MEM_WR_EN <= MEM_WR_EN;
+			  OUT_MEM_READ_EN <= MEM_READ_EN;
+			  OUT_MEM_Z_CHECK	<= MEM_Z_CHECK;
+			  OUT_MEM_N_CHECK <= MEM_N_CHECK;
            OUT_WB <= IN_WB;
-           OUT_ALU_RESULT <= IN_ALU_RESULT ;
+           OUT_ALU_RESULT <= IN_ALU_RESULT;
            OUT_Z_FLAG <= IN_Z_FLAG;
            OUT_N_FLAG <= IN_N_FLAG;
 			  OUT_BRN_Z_FLAG <= IN_BRN_Z_FLAG;

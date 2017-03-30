@@ -2,10 +2,10 @@
 -- Company: 
 -- Engineer:
 --
--- Create Date:   20:05:58 03/26/2017
+-- Create Date:   15:33:00 03/29/2017
 -- Design Name:   
--- Module Name:   /home/cbest/CENG450/Processor/tb_decode.vhd
--- Project Name:  processor_proj
+-- Module Name:   M:/CENG450/Processor/tb_decode.vhd
+-- Project Name:  PROCESSOR2
 -- Target Device:  
 -- Tool versions:  
 -- Description:   
@@ -41,13 +41,6 @@ ARCHITECTURE behavior OF tb_decode IS
  
     COMPONENT decode_test
     PORT(
-         OUT_MEM : OUT  std_logic_vector(3 downto 0);
-         OUT_WB : OUT  std_logic_vector(1 downto 0);
-         OUT_ALU_RESULT : OUT  std_logic_vector(15 downto 0);
-         OUT_Z_FLAG : OUT  std_logic;
-         OUT_N_FLAG : OUT  std_logic;
-         OUT_DATA2 : OUT  std_logic_vector(15 downto 0);
-         OUT_RA_INDEX : OUT  std_logic_vector(2 downto 0);
          P_reset : IN  std_logic;
          P_clock : IN  std_logic;
          P_enable : IN  std_logic;
@@ -64,13 +57,6 @@ ARCHITECTURE behavior OF tb_decode IS
    signal IN_port : std_logic_vector(15 downto 0) := (others => '0');
 
  	--Outputs
-   signal OUT_MEM : std_logic_vector(3 downto 0);
-   signal OUT_WB : std_logic_vector(1 downto 0);
-   signal OUT_ALU_RESULT : std_logic_vector(15 downto 0);
-   signal OUT_Z_FLAG : std_logic;
-   signal OUT_N_FLAG : std_logic;
-   signal OUT_DATA2 : std_logic_vector(15 downto 0);
-   signal OUT_RA_INDEX : std_logic_vector(2 downto 0);
    signal OUT_port : std_logic_vector(15 downto 0);
 
    -- Clock period definitions
@@ -80,13 +66,6 @@ BEGIN
  
 	-- Instantiate the Unit Under Test (UUT)
    uut: decode_test PORT MAP (
-          OUT_MEM => OUT_MEM,
-          OUT_WB => OUT_WB,
-          OUT_ALU_RESULT => OUT_ALU_RESULT,
-          OUT_Z_FLAG => OUT_Z_FLAG,
-          OUT_N_FLAG => OUT_N_FLAG,
-          OUT_DATA2 => OUT_DATA2,
-          OUT_RA_INDEX => OUT_RA_INDEX,
           P_reset => P_reset,
           P_clock => P_clock,
           P_enable => P_enable,
@@ -113,14 +92,13 @@ BEGIN
       wait for 105 ns;
 		P_reset <= '0';		
 		P_enable <= '1';
-		IN_port	<= X"0101";
+		IN_port	<= X"0101";	-- r1
       wait for P_clock_period*5;
-		IN_port	<= X"0001";
+		IN_port	<= X"0001"; -- r2
       wait for P_clock_period*1;
-		IN_port	<= X"0AAA";
+		IN_port	<= X"0AAA"; -- r3
       wait for P_clock_period*30;		
-		P_enable <= '0';
-
+--		P_enable <= '0';
       -- insert stimulus here 
 
       wait;

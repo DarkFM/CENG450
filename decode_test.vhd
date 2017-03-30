@@ -30,13 +30,18 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity decode_test is
-    Port ( OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
-           OUT_WB : out  STD_LOGIC_VECTOR (1 downto 0);
-           OUT_ALU_RESULT : out  STD_LOGIC_VECTOR (15 downto 0);
-           OUT_Z_FLAG : out  STD_LOGIC;
-           OUT_N_FLAG : out  STD_LOGIC;
-           OUT_DATA2 : out  STD_LOGIC_VECTOR (15 downto 0);			  
-           OUT_RA_INDEX : out  STD_LOGIC_VECTOR (2 downto 0);
+    Port ( --OUT_MEM_WR_EN : OUT STD_LOGIC;
+--			  OUT_MEM_READ_EN: OUT STD_LOGIC;
+--			  OUT_MEM_Z_CHECK: OUT STD_LOGIC;
+--			  OUT_MEM_N_CHECK: OUT STD_LOGIC;
+--           OUT_WB : out  STD_LOGIC_VECTOR (1 downto 0);
+--           OUT_ALU_RESULT : out  STD_LOGIC_VECTOR (15 downto 0);
+--           OUT_Z_FLAG : out  STD_LOGIC;
+--           OUT_N_FLAG : out  STD_LOGIC;
+--           OUT_BRN_Z_FLAG : out  STD_LOGIC;
+--           OUT_BRN_N_FLAG : out  STD_LOGIC;					  
+--           OUT_DATA2 : out  STD_LOGIC_VECTOR (15 downto 0);			  
+--           OUT_RA_INDEX : out  STD_LOGIC_VECTOR (2 downto 0);
 				P_reset : in  STD_LOGIC;
 				P_clock : in  STD_LOGIC;
 				P_enable : in std_logic;
@@ -212,6 +217,13 @@ COMPONENT OUT_BOX is
 end COMPONENT;
 
 
+COMPONENT Wr_En_Mux2x1 is
+    Port ( SEL : in  STD_LOGIC;
+           A : in  STD_LOGIC;
+           B : in  STD_LOGIC;
+           X : out  STD_LOGIC);
+end COMPONENT;
+
 --------------------------------------------------------------------
 --			EXECUTE STAGE
 --------------------------------------------------------------------		
@@ -263,7 +275,11 @@ component EBUF is
            IN_DATA2 : in  STD_LOGIC_VECTOR (15 downto 0);
            IN_RA_INDEX : in  STD_LOGIC_VECTOR (2 downto 0);
 			  
-           OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
+--           OUT_MEM : out  STD_LOGIC_VECTOR (3 downto 0);
+			  OUT_MEM_WR_EN : OUT STD_LOGIC;
+			  OUT_MEM_READ_EN: OUT STD_LOGIC;
+			  OUT_MEM_Z_CHECK: OUT STD_LOGIC;
+			  OUT_MEM_N_CHECK: OUT STD_LOGIC;
            OUT_WB : out  STD_LOGIC_VECTOR (1 downto 0);
            OUT_ALU_RESULT : out  STD_LOGIC_VECTOR (15 downto 0);
            OUT_Z_FLAG : out  STD_LOGIC;
@@ -275,8 +291,52 @@ component EBUF is
 end component;
 
 
+--------------------------------------------------------------------
+--			MEMORY STAGE 
+--------------------------------------------------------------------		
+
+component MEMORY is
+    Port ( rst : in std_logic;
+			  mem_write_en : in  STD_LOGIC;
+           mem_read_en : in  STD_LOGIC;
+           address : in  STD_LOGIC_VECTOR (15 downto 0);
+           data_in : in  STD_LOGIC_VECTOR (15 downto 0);
+           data_out : out  STD_LOGIC_VECTOR (15 downto 0));
+end component;
+
+--component OR_GATE is
+--    Port ( X : in  STD_LOGIC;
+--           Y : in  STD_LOGIC;
+--           OUTPUT : out  STD_LOGIC);
+--end component;
+
+component holding_reg is
+    Port ( n_flag : in  STD_LOGIC;
+           z_flag : in  STD_LOGIC;
+           z_check : in  STD_LOGIC;
+           n_check : in  STD_LOGIC;
+			  clk : in STD_LOGIC;
+           out_pc_sel : out  STD_LOGIC);
+end component;
 
 
+--------------------------------------------------------------------
+---		WRITE BACK STAGE 
+-------------------------------------------------------------------
+
+component MBUF is
+    Port ( IN_WB : in  STD_LOGIC_VECTOR (1 downto 0);
+           IN_DATA_RD : in  STD_LOGIC_VECTOR (15 downto 0);
+           IN_ADDR : in  STD_LOGIC_VECTOR (15 downto 0);
+           RA_INDEX : in  STD_LOGIC_VECTOR (2 downto 0);
+           OUT_ADDR : out  STD_LOGIC_VECTOR (15 downto 0);
+           OUT_DATA_RD : out  STD_LOGIC_VECTOR (15 downto 0);
+           OUT_RA_INDEX : out  STD_LOGIC_VECTOR (2 downto 0);
+           OUT_WR_EN : out  STD_LOGIC;
+           OUT_WB_MUX_SEL : out  STD_LOGIC;
+			  clk: in STD_LOGIC;
+			  reset: IN STD_LOGIC);
+end component;
 
 --------------------------------------------------------------------
 --			SIGNALS 
@@ -328,12 +388,20 @@ end component;
 	
 	-- CONNCECTIONS FOR IN_MUX
 	SIGNAL WRITE_MUX_TO_REG_FILE : STD_LOGIC_VECTOR (15 DOWNTO 0);
-	SIGNAL ALU_RESULT : STD_LOGIC_VECTOR (15 DOWNTO 0);		
+--	SIGNAL ALU_RESULT : STD_LOGIC_VECTOR (15 DOWNTO 0);		
 --	SIGNAL WRITE_MUX_SEL : STD_LOGIC;
 --	SIGNAL IN_PORT : STD_LOGIC_VECTOR (15 DOWNTO 0);
 
 	-- CONNECTION FROM SIGN EXTENDER
 	SIGNAL SIGN_EX_TO_DBUF:  STD_LOGIC_VECTOR (15 DOWNTO 0);
+	
+	--CONNECTIONS TO MUX INTO WR_EN
+	SIGNAL MBUF_OUT_WR_EN :STD_LOGIC;
+	SIGNAL WRITE_MUX_WR_EN :STD_LOGIC;
+	
+	--CONNECTIONS TO MUX INTO WR_INDEX
+--	SIGNAL MBUF_OUT_WR_INDEX: STD_LOGIC_VECTOR(2 DOWNTO 0);
+	SIGNAL WRITE_MUX_WR_INDEX: STD_LOGIC_VECTOR(2 DOWNTO 0); 
 
 
 	------------------------------ EXECUTE SIGNALS---------------------------------
@@ -366,12 +434,42 @@ end component;
 	SIGNAL ALU_TO_EBUF_BRN_Z_FLAG: STD_LOGIC;
 	SIGNAL ALU_TO_EBUF_BRN_N_FLAG: STD_LOGIC;
 	
---	-- DEFAULT VALUES FOR MUX'S
---	SIGNAL ALU2_MODE_CONST:  STD_LOGIC_VECTOR(2 DOWNTO 0);	
---	SIGNAL ALU2_ARG2:  STD_LOGIC_VECTOR(15 DOWNTO 0);	
+
+	---------------------------- MEMORY SIGNALS -----------------------------------------------
 	
+	-- signals from EBUF
+	SIGNAL EBUF_MEM_WR_EN: STD_LOGIC;
+	SIGNAL EBUF_MEM_RD_EN: STD_LOGIC;
+--	SIGNAL EBUF_MEM_PC_SRC_SEL: STD_LOGIC;
+	SIGNAL EBUF_MEM_Z_CHECK: STD_LOGIC;
+	SIGNAL EBUF_MEM_N_CHECK: STD_LOGIC;
+	SIGNAL EBUF_WB_TO_MBUF:  STD_LOGIC_VECTOR(1 DOWNTO 0);	
+	SIGNAL EBUF_ALU_RESULTS:  STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL EBUF_BR_Z_FLAG:  STD_LOGIC;	
+	SIGNAL EBUF_BR_N_FLAG:  STD_LOGIC;	
+	SIGNAL EBUF_Z_FLAG:  STD_LOGIC;	
+	SIGNAL EBUF_N_FLAG:  STD_LOGIC;		
+	SIGNAL EBUF_DATA_2:  STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL EBUF_RA_INDEX:  STD_LOGIC_VECTOR(2 DOWNTO 0);	
+	
+	-- SIGNAL FROM MEMORY
+	SIGNAL MEM_OUT_RD_DATA:  STD_LOGIC_VECTOR(15 DOWNTO 0);	
+	
+	-- SIGNALS FROM HOLDING
+	SIGNAL HOLDING_PC_SEL: STD_LOGIC;
 
-
+---------------------------- WRITE BACK SIGNALS -------------------------------
+	-- SIGNALS FROM MBUF
+	SIGNAL MBUF_WR_EN: STD_LOGIC;
+	SIGNAL MBUF_MUX_SEL: STD_LOGIC;
+	SIGNAL MBUF_DATA_OUT: STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL MBUF_ADDR_OUT: STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL MBUF_WR_INDEX: STD_LOGIC_VECTOR(2 DOWNTO 0);
+	
+	-- SIGNAL FROM WB MUX
+	SIGNAL WB_MUX_TO_DATA_IN_MUX: STD_LOGIC_VECTOR(15 DOWNTO 0);
+	
+	
 begin
 
 PC_SEL <= '0';
@@ -381,11 +479,11 @@ PC_FROM_EBUF <= (others => '0');
 
 
 	MUX_PC: Mux2x1
-		generic map(n1_bits => PC_FROM_EBUF'length, n2_bits => PC_FROM_ADD'length, n3_bits => MUX_TO_PC_MODULE'length)
+		generic map(n1_bits => EBUF_ALU_RESULTS'length, n2_bits => PC_FROM_ADD'length, n3_bits => MUX_TO_PC_MODULE'length)
 		Port map(
-			SEL => PC_SEL, -- comes from FBUF
+			SEL => HOLDING_PC_SEL,-- PC_SEL, -- comes from FBUF
 			A  => PC_FROM_ADD,
-			B  =>  PC_FROM_EBUF,
+			B  =>  EBUF_ALU_RESULTS,
 			X  => MUX_TO_PC_MODULE
 		);
 		
@@ -438,14 +536,32 @@ MUX_READ_REG1: Mux2x1
 		);
 
 
-MUX_WRITE_SEL: Mux2x1
-		generic map(n1_bits => ALU_RESULT'length, n2_bits => IN_PORT'length, n3_bits => WRITE_MUX_TO_REG_FILE'length)
+MUX_WRITE_DATA_IN: Mux2x1
+		generic map(n1_bits => WB_MUX_TO_DATA_IN_MUX'length, n2_bits => IN_PORT'length, n3_bits => WRITE_MUX_TO_REG_FILE'length)
 		Port map(
 			SEL => OUT_CTRL_IN_MUX_SEL, -- comes from ctrl unit
-			A  => ALU_RESULT,
+			A  => WB_MUX_TO_DATA_IN_MUX,
 			B  => IN_port,
 			X  => WRITE_MUX_TO_REG_FILE
 		);
+		
+MUX_WRITE_EN: Wr_En_Mux2x1
+		--generic map(n1_bits => MBUF_OUT_WR_EN'length, n2_bits => OUT_CTRL_WRITE_EN'length, n3_bits => WRITE_MUX_WR_EN'length)
+		Port map(
+			SEL => OUT_CTRL_IN_MUX_SEL, -- comes from ctrl unit
+			A  => MBUF_OUT_WR_EN, -- 0
+			B  => OUT_CTRL_WRITE_EN, -- 1
+			X  => WRITE_MUX_WR_EN
+		); 
+
+MUX_WRITE_INDEX: Mux2x1
+		generic map(n1_bits => MBUF_WR_INDEX'length, n2_bits => OUT_CTRL_WRITE_INDEX'length, n3_bits => WRITE_MUX_WR_INDEX'length)
+		Port map(
+			SEL => OUT_CTRL_IN_MUX_SEL, -- comes from ctrl unit
+			A  => MBUF_WR_INDEX,
+			B  => OUT_CTRL_WRITE_INDEX,
+			X  => WRITE_MUX_WR_INDEX
+		);		
 
 	CTRL_UNIT: control_unit
     Port map ( 
@@ -494,9 +610,9 @@ MUX_WRITE_SEL: Mux2x1
     		rd_address_2 => DECODE_TO_RD_REG2,
     		data_out_2 => Reg_file_data2,
 
-    		wr_address => OUT_CTRL_WRITE_INDEX,
+    		wr_address => WRITE_MUX_WR_INDEX,
     		data_in => WRITE_MUX_TO_REG_FILE,
-    		reg_wr_en => OUT_CTRL_WRITE_EN
+    		reg_wr_en => WRITE_MUX_WR_EN
     	);
 		
 		
@@ -587,20 +703,7 @@ ALU_MAIN: alu
 		
 	);
 
--- ALU2: alu
---	  Port map (
---			P_IN_rst => P_reset,
---			P_IN_en => '1',--DBUF_ALU2_EN,
---
---			P_IN_alu_mode => ALU2_MODE_CONST,
---			P_IN_arg1 => DBUF_DATA1 ,
---			P_IN_arg2 => ALU2_ARG2,
---			P_OUT_result => open,   
---			P_OUT_z_flag => ALU_TO_EBUF_Z_FLAG,
---			P_OUT_n_flag => ALU_TO_EBUF_N_FLAG,
---			P_OUT_p_flag => open
---
---	  );
+
 	  
 	  
 EBUF1: EBUF 
@@ -617,20 +720,92 @@ EBUF1: EBUF
            IN_BRN_N_FLAG  => ALU_TO_EBUF_BRN_N_FLAG,				  
            IN_DATA2  => DBUF_DATA2,
            IN_RA_INDEX  => DBUF_RA_INDEX ,
-			  
-           OUT_MEM  => OUT_MEM,
-           OUT_WB  => OUT_WB,
-           OUT_ALU_RESULT => OUT_ALU_RESULT,
-           OUT_Z_FLAG  => OUT_Z_FLAG,
-           OUT_N_FLAG  => OUT_N_FLAG,
-           OUT_BRN_Z_FLAG => open,
-           OUT_BRN_N_FLAG  => open,			  
-           OUT_DATA2  => OUT_DATA2,			  
-           OUT_RA_INDEX  => OUT_RA_INDEX
+--			  
+--			  OUT_MEM_WR_EN => OUT_MEM_WR_EN,
+--			  OUT_MEM_READ_EN => OUT_MEM_READ_EN,
+--			  OUT_MEM_Z_CHECK => OUT_MEM_Z_CHECK,
+--			  OUT_MEM_N_CHECK => OUT_MEM_N_CHECK,
+--           OUT_WB  => OUT_WB,
+--           OUT_ALU_RESULT => OUT_ALU_RESULT,
+--           OUT_Z_FLAG  => OUT_Z_FLAG,
+--           OUT_N_FLAG  => OUT_N_FLAG,
+--           OUT_BRN_Z_FLAG => OUT_BRN_Z_FLAG,
+--           OUT_BRN_N_FLAG  => OUT_BRN_N_FLAG,			  
+--           OUT_DATA2  => OUT_DATA2,			  
+--           OUT_RA_INDEX  => OUT_RA_INDEX
+
+			  OUT_MEM_WR_EN => EBUF_MEM_WR_EN,
+			  OUT_MEM_READ_EN => EBUF_MEM_RD_EN,
+			  OUT_MEM_Z_CHECK => EBUF_MEM_Z_CHECK,
+			  OUT_MEM_N_CHECK => EBUF_MEM_N_CHECK,
+           OUT_WB  => EBUF_WB_TO_MBUF,
+           OUT_ALU_RESULT => EBUF_ALU_RESULTS,
+           OUT_Z_FLAG  => EBUF_Z_FLAG,
+           OUT_N_FLAG  => EBUF_N_FLAG,
+           OUT_BRN_Z_FLAG => EBUF_BR_Z_FLAG,
+           OUT_BRN_N_FLAG  => EBUF_BR_N_FLAG,			  
+           OUT_DATA2  => EBUF_DATA_2,			  
+           OUT_RA_INDEX  => EBUF_RA_INDEX
 	  );	  
  
+--------------------------------------------------------------------
+--			MEMORY STAGE
+--------------------------------------------------------------------		 
 	 
+MEMORY1: MEMORY
+    Port map(
+			  rst => P_reset,
+			  mem_write_en => EBUF_MEM_WR_EN,
+           mem_read_en  => EBUF_MEM_RD_EN,
+           address  => EBUF_ALU_RESULTS,
+           data_in  => EBUF_DATA_2,
+           data_out  => MEM_OUT_RD_DATA
+		  );
+
+
+
+hold_flags: holding_reg 
+    Port map( n_flag => EBUF_N_FLAG,
+           z_flag => EBUF_Z_FLAG,
+           z_check => EBUF_MEM_Z_CHECK,
+           n_check => EBUF_MEM_N_CHECK,
+			  clk => P_clock,
+           out_pc_sel => HOLDING_PC_SEL
+		  );
+
+---------------------------------------------------------------------
+--			WRITE BACK STAGE
+---------------------------------------------------------------------
+
+MBUF1: MBUF
+    Port map ( IN_WB => EBUF_WB_TO_MBUF,
+           IN_DATA_RD => MEM_OUT_RD_DATA,
+           IN_ADDR => EBUF_ALU_RESULTS,
+           RA_INDEX => EBUF_RA_INDEX,
+           OUT_ADDR => MBUF_ADDR_OUT,
+           OUT_DATA_RD => MBUF_DATA_OUT,
+           OUT_RA_INDEX => MBUF_WR_INDEX,
+           OUT_WR_EN => MBUF_WR_EN ,
+           OUT_WB_MUX_SEL  => MBUF_MUX_SEL,
+			  clk => P_clock,
+			  reset => P_reset
+		  );
+
+MUX_WB: Mux2x1
+		generic map(n1_bits => MBUF_ADDR_OUT'length, n2_bits => MBUF_DATA_OUT'length, n3_bits => WB_MUX_TO_DATA_IN_MUX'length)
+		Port map(
+			SEL => MBUF_MUX_SEL, -- comes from ctrl unit
+			A  => MBUF_ADDR_OUT,
+			B  => MBUF_DATA_OUT,
+			X  => WB_MUX_TO_DATA_IN_MUX
+		);
 	 
 
+
 end Behavioral;
+
+
+
+
+
 

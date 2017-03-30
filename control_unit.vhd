@@ -81,29 +81,36 @@ begin
 			'1' & '0' & '0' & "00" & "100" when 4,							
 			'1' & '0' & '0' & "10" & "101" when 5,
 			'1' & '0' & '0' & "10" & "110" when 6, 	-- Right SHIFT by c1 times
-			'1' & '0' & '0' & "00" & "111" when 7, -- TEST instruction for flags
+			'1' & '1' & '0' & "00" & "111" when 7, -- TEST instruction for flags
 			'0' & '0' & '0' & "00" & "000" when 32,	-- OUT, send instruction to out port
 			'0' & '0' & '0' & "00" & "000" when 33, 	-- IN, send instruction to IN port and into reg_file
+			'1' & '1' & '1' & "01" & "001" when 64, -- pc + disp
+			'1' & '1' & '1' & "01" & "001" when 65, 
+			'1' & '1' & '1' & "01" & "001" when 66, 
+			'1' & '1' & '0' & "01" & "001" when 67, -- not sure how to deal with
+			'1' & '1' & '0' & "01" & "001" when 68, 			
 			'0' & '0' & '0' & "00" & "000" when others;
 			-- NEED TO CHANGE alu_disp_sel FOR WHEN IT IS A BRANCH
 			
 	with int_op_code select		
 		OUT_CTRL_MEM <= 
 				-- A instructions
-				"1000" when 1 to 4,
-				"1000" when 5 to 7,
-				"0000" when 32,
-				"1000" when 33,
-				"0000" when others;
+		-- mem_wr_en & mem_read_en & Z_check & N_check
+				'0' & '1' & '0' & '0' when 16, -- need to zero out but enable for load ans store operations
+				'1' & '0' & '0' & '0' when 17,
+				'0' & '0' & '1' & '0' when 66,
+				'0' & '0' & '1' & '0' when 69,
+				'0' & '0' & '0' & '1' when 65, 
+				'0' & '0' & '0' & '1' when 68,
+				'0' & '0' & '0' & '0' when others;
 				
 	with int_op_code select			
 		OUT_CTRL_WB <= 
 				-- A instructions
-				'1' & '0' when 1 to 4,
-				'1' & '0' when 5 to 6,
-				'1' & '0' when 7 to 32,
-				'1' & '0' when 33, 	-- IN, send instruction to IN port and into reg_file
-				"00" when others;	
+			-- reg_write_en & mux_sel_in_wb_stage
+				'1' & '0' when 1 to 6,
+				'1' & '1' when 19,
+				'0' & '0' when others;	
 				
 	
 	-----------------------------------------------------------------------------------------------
@@ -112,6 +119,7 @@ begin
 	with int_op_code select		
 			OUT_CTRL_RA_MUX_SEL <=	
 				'1' when 5 to 6,	-- if shift instruction
+				'1' when 32,
 				'0' when others;
 			
 	with int_op_code select	
@@ -136,7 +144,7 @@ begin
 							
 	with int_op_code select	
 			OUT_PORT_EN <=
-				'1' when 5 TO 6, -- for OUT insrutuction
+				'1' when 32, -- for OUT insrutuction
 				'0' when others;				
 		
 --	OUT_CTRL_R_INDEX1 <= A_RB;
